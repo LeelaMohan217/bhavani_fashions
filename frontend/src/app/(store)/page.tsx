@@ -60,7 +60,7 @@ async function Banners() {
 
 function BannersSkeleton() {
   return (
-    <div className="md:container-x md:pt-6" aria-hidden>
+    <div className="container-x pt-3 md:pt-6" aria-hidden>
       <div className="aspect-[4/5] max-h-[82svh] w-full animate-pulse bg-sand md:aspect-[21/8] md:max-h-none" />
     </div>
   );

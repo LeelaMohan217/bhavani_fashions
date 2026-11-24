@@ -11,7 +11,7 @@ const iconButton = "size-10 items-center justify-center rounded-full text-ink tr
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b border-line/80 bg-canvas/90 backdrop-blur-md supports-[backdrop-filter]:bg-canvas/75">
+    <header className="sticky top-0 z-40 border-b border-line/80 bg-canvas">
       <div className="container-x grid h-[4.5rem] grid-cols-[1fr_auto_1fr] items-center md:h-20">
         <div className="flex items-center">
           <MobileNav />

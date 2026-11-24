@@ -49,7 +49,7 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
     <section
       aria-roledescription="carousel"
       aria-label="Offers"
-      className="group/carousel relative md:container-x md:pt-6"
+      className="group/carousel container-x relative pt-3 md:pt-6"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}

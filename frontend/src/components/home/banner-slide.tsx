@@ -49,7 +49,7 @@ export function BannerSlide({
       {banner.imageUrl &&
         (preview ? (
           // eslint-disable-next-line @next/next/no-img-element -- preview of an unsaved URL
-          <img src={banner.imageUrl} alt="" className="absolute inset-0 size-full object-cover" />
+          <img src={banner.imageUrl} alt="" className="absolute inset-0 size-full object-cover object-top" />
         ) : (
           <Image
             src={banner.imageUrl}
@@ -57,7 +57,8 @@ export function BannerSlide({
             fill
             priority={priority}
             sizes="(min-width: 1280px) 1240px, 100vw"
-            className="object-cover"
+            // Anchor to the top so heads and faces are never cut off
+            className="object-cover object-top"
           />
         ))}
       <div className={`absolute inset-0 ${shade}`} aria-hidden />
