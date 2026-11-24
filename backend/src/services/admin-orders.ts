@@ -212,13 +212,28 @@ export async function alerts() {
   };
 }
 
+// The store runs on Indian time: "today", "same day last week" and the monthly chart use IST
+// calendar days/months whatever the server's own time zone is.
+const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** Shift a UTC instant so its UTC fields read as IST wall-clock time */
+const toIst = (d: Date) => new Date(d.getTime() + IST_OFFSET_MS);
+const fromIst = (istWallClockMs: number) => new Date(istWallClockMs - IST_OFFSET_MS);
+const istMonthKey = (d: Date) => toIst(d).toISOString().slice(0, 7); // "2026-11"
+
 export async function dashboard() {
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
+  const now = new Date();
+  const nowIst = toIst(now);
+  const startOfToday = fromIst(Math.floor(nowIst.getTime() / DAY_MS) * DAY_MS);
+  // Same IST day last week, up to the same time of day, for a fair "vs last week"
+  const lastWeekStart = new Date(startOfToday.getTime() - 7 * DAY_MS);
+  const lastWeekNow = new Date(now.getTime() - 7 * DAY_MS);
+  // First day of the IST month 11 months ago → 12 months including this one
+  const monthsStart = fromIst(Date.UTC(nowIst.getUTCFullYear(), nowIst.getUTCMonth() - 11, 1));
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const live: Prisma.OrderWhereInput = { status: { notIn: ["PENDING_PAYMENT", "CANCELLED"] } };
 
-  const [today, month, toFulfil, byMethod, lowStockCount, lowStock, recent] = await Promise.all([
+  const [today, month, toFulfil, byMethod, lowStockCount, lowStock, recent, lastWeek, year] = await Promise.all([
     prisma.order.aggregate({ where: { ...live, createdAt: { gte: startOfToday } }, _count: true, _sum: { total: true } }),
     prisma.order.aggregate({ where: { ...live, createdAt: { gte: thirtyDaysAgo } }, _count: true, _sum: { total: true } }),
     prisma.order.count({ where: { status: { in: ["CONFIRMED", "PACKED"] } } }),
@@ -241,7 +256,26 @@ export async function dashboard() {
       take: 6,
       select: { id: true, number: true, fullName: true, total: true, status: true, paymentMethod: true, createdAt: true },
     }),
+    prisma.order.aggregate({
+      where: { ...live, createdAt: { gte: lastWeekStart, lt: lastWeekNow } },
+      _count: true,
+      _sum: { total: true },
+    }),
+    prisma.order.findMany({ where: { ...live, createdAt: { gte: monthsStart } }, select: { createdAt: true, total: true } }),
   ]);
+
+  // Last 12 IST months, oldest first, including months with no sales
+  const monthly = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(Date.UTC(nowIst.getUTCFullYear(), nowIst.getUTCMonth() - 11 + i, 1));
+    return { month: d.toISOString().slice(0, 7), orders: 0, revenue: 0 };
+  });
+  for (const o of year) {
+    const m = monthly.find((x) => x.month === istMonthKey(o.createdAt));
+    if (m) {
+      m.orders += 1;
+      m.revenue += o.total;
+    }
+  }
 
   const method = (m: "COD" | "RAZORPAY") => {
     const row = byMethod.find((r) => r.paymentMethod === m);
@@ -256,5 +290,7 @@ export async function dashboard() {
     lowStockCount,
     lowStock,
     recentOrders: recent.map((o) => ({ ...o, number: formatOrderNumber(o.number) })),
+    sameDayLastWeek: { orders: lastWeek._count, revenue: lastWeek._sum.total ?? 0 },
+    monthly,
   };
 }

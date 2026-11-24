@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { useSyncStatus } from "./sync-button";
 
 const noop = () => () => {};
 
@@ -21,14 +22,23 @@ export function Greeting({ name, actions }: { name: string; actions?: React.Reac
   const salutation = useSyncExternalStore(noop, partOfDay, () => "Welcome back");
   const date = useSyncExternalStore(noop, today, () => "");
   const first = name.split(" ")[0];
+  const sync = useSyncStatus();
 
   return (
-    <div data-rise className="mb-6 flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight text-neutral-900 md:text-2xl">
+    <div data-rise className="mb-6 flex items-center justify-between gap-3 sm:items-end sm:gap-4">
+      <div className="min-w-0">
+        <h1 className="truncate text-xl font-semibold tracking-tight text-neutral-900 md:text-2xl">
           {salutation}, {first}
         </h1>
-        <p className="mt-1 h-5 text-sm text-neutral-500">{date}</p>
+        <p className="mt-1 h-5 text-sm text-neutral-500">
+          {/* Phones show the sync status here (their sync button is icon-only) */}
+          {sync === "syncing" ? (
+            <span className="sm:hidden">Syncing…</span>
+          ) : sync === "done" ? (
+            <span className="text-emerald-700 sm:hidden">Updated just now</span>
+          ) : null}
+          <span className={sync === "idle" ? "" : "max-sm:hidden"}>{date}</span>
+        </p>
       </div>
       {actions}
     </div>

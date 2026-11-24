@@ -25,6 +25,10 @@ export type Dashboard = {
     paymentMethod: PaymentMethod;
     createdAt: string;
   }[];
+  /** Same IST day last week, up to the same time of day (absent on an older API) */
+  sameDayLastWeek?: { orders: number; revenue: number };
+  /** Last 12 IST months, oldest first, e.g. { month: "2026-11", ... } (absent on an older API) */
+  monthly?: { month: string; orders: number; revenue: number }[];
 };
 
 export type AdminAlerts = {
