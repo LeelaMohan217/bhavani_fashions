@@ -5,7 +5,7 @@ import { Logo } from "./logo";
 import { MobileNav } from "./mobile-nav";
 import { SearchBar, SearchButton } from "./search-overlay";
 import { WishlistLink } from "./wishlist-button";
-import { ProfileMenu } from "./profile-menu";
+import { User } from "lucide-react";
 
 // Display is set per element (inline-flex vs hidden md:inline-flex) so the classes never conflict
 const iconButton = "size-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-sand";
@@ -41,8 +41,11 @@ export function SiteHeader() {
           {/* Phones search from the bar below; larger screens use this icon */}
           <SearchButton className={`${iconButton} hidden md:inline-flex`} />
           <WishlistLink className={`${iconButton} inline-flex`} />
-          <ProfileMenu className={`${iconButton} inline-flex`} />
           <BagButton className={iconButton} />
+          {/* Customer accounts aren't built yet: the icon is in place but does nothing for now */}
+          <button type="button" aria-label="My account (coming soon)" title="Coming soon" className={`${iconButton} inline-flex`}>
+            <User className="size-[1.15rem]" strokeWidth={1.5} />
+          </button>
         </div>
       </div>
       <div className="container-x pb-3 md:hidden">

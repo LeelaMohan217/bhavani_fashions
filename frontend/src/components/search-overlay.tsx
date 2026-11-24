@@ -33,7 +33,7 @@ export function SearchBar({ className = "" }: { className?: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`flex h-11 w-full items-center gap-2.5 bg-sand px-3.5 text-left text-sm text-stone transition-colors active:bg-line ${className}`}
+        className={`flex h-11 w-full items-center gap-2.5 rounded-lg bg-sand px-3.5 text-left text-sm text-stone transition-colors active:bg-line ${className}`}
       >
         <Search className="size-4 shrink-0" strokeWidth={1.75} />
         <span className="truncate">Search sarees, lehengas, kurta sets</span>
@@ -87,7 +87,7 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
       <div className="relative h-[100dvh] animate-fade-in overflow-y-auto bg-canvas md:h-auto md:max-h-[85dvh] md:shadow-[0_24px_48px_-24px_rgb(17_17_17/0.35)]">
         <div className="container-x pb-10 pt-3 md:pb-12 md:pt-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 min-w-0 flex-1 items-center gap-2.5 bg-sand px-3.5 focus-within:ring-1 focus-within:ring-ink md:h-12">
+            <div className="flex h-11 min-w-0 flex-1 items-center gap-2.5 rounded-lg bg-sand px-3.5 focus-within:ring-1 focus-within:ring-ink md:h-12">
               {loading ? (
                 <LoaderCircle className="size-4 shrink-0 animate-spin text-stone" strokeWidth={1.75} />
               ) : (
