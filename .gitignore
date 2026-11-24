@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Secrets — never commit real env files (the *.example files are safe templates)
+.env
+.env.*
+!.env.example
+
+# Build output
+.next/
+out/
+dist/
+backend/generated/
+*.tsbuildinfo
+
+# Logs & OS files
+*.log
+.DS_Store
+Thumbs.db

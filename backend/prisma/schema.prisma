@@ -1,0 +1,235 @@
+// Bhavani Fashion — database schema
+// Money is stored as integers in paise (₹1 = 100 paise) to avoid floating-point errors.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  tagline     String?
+  description String?
+  imageUrl    String?
+  sortOrder   Int       @default(0)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id               String           @id @default(cuid())
+  name             String
+  slug             String           @unique
+  description      String
+  fabric           String?
+  occasion         String?
+  care             String?
+  /// Selling price in paise
+  price            Int
+  /// Original price in paise, shown struck-through when on sale
+  compareAtPrice   Int?
+  isFeatured       Boolean          @default(false)
+  isNewArrival     Boolean          @default(false)
+  isActive         Boolean          @default(true)
+  categoryId       String
+  category         Category         @relation(fields: [categoryId], references: [id])
+  images           ProductImage[]
+  variants         ProductVariant[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([categoryId])
+  @@index([isActive, isFeatured])
+  @@index([isActive, isNewArrival])
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  url       String
+  alt       String
+  position  Int     @default(0)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model ProductVariant {
+  id        String  @id @default(cuid())
+  sku       String  @unique
+  color     String
+  colorHex  String
+  /// Null for free-size items such as sarees
+  size      String?
+  stock     Int     @default(0)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems CartItem[]
+  orderItems OrderItem[]
+
+  @@index([productId])
+}
+
+// ─── Cart ────────────────────────────────────────────────────────────────────
+// Anonymous carts, identified by an unguessable id kept in a cookie on the storefront.
+
+model Cart {
+  id        String     @id @default(cuid())
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String         @id @default(cuid())
+  cartId    String
+  cart      Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  quantity  Int
+  createdAt DateTime       @default(now())
+
+  @@unique([cartId, variantId])
+}
+
+// ─── Orders ──────────────────────────────────────────────────────────────────
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  PACKED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  RAZORPAY
+  COD
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  /// Cash to be collected on delivery
+  COD_DUE
+  /// Paid online but could not be fulfilled — refund required
+  REFUND_DUE
+  /// Refund issued (recorded by an admin)
+  REFUNDED
+}
+
+model Order {
+  id                String        @id @default(cuid())
+  /// Human-friendly sequential number, shown as e.g. BF10001
+  number            Int           @unique @default(autoincrement())
+  status            OrderStatus   @default(PENDING_PAYMENT)
+  paymentMethod     PaymentMethod
+  paymentStatus     PaymentStatus @default(PENDING)
+
+  email             String
+  phone             String
+  fullName          String
+  addressLine1      String
+  addressLine2      String?
+  city              String
+  state             String
+  pincode           String
+
+  /// All amounts in paise
+  subtotal          Int
+  shippingFee       Int
+  codFee            Int
+  total             Int
+
+  razorpayOrderId   String?       @unique
+  razorpayPaymentId String?
+
+  /// Cart that produced this order; emptied once the order is confirmed
+  cartId            String?
+  items             OrderItem[]
+  events            OrderEvent[]
+
+  courierName       String?
+  trackingNumber    String?
+
+  confirmedAt       DateTime?
+  shippedAt         DateTime?
+  deliveredAt       DateTime?
+  cancelledAt       DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([status, createdAt])
+  @@index([createdAt])
+}
+
+/// Timeline / audit trail of everything that happened to an order
+model OrderEvent {
+  id        String     @id @default(cuid())
+  orderId   String
+  order     Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  /// e.g. "status:SHIPPED", "payment:REFUNDED", "note"
+  type      String
+  message   String
+  adminId   String?
+  admin     AdminUser? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  createdAt DateTime   @default(now())
+
+  @@index([orderId, createdAt])
+}
+
+// ─── Admin ───────────────────────────────────────────────────────────────────
+
+model AdminUser {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  name         String
+  /// argon2id hash — never store or log plain passwords
+  passwordHash String
+  isActive     Boolean        @default(true)
+  lastLoginAt  DateTime?
+  sessions     AdminSession[]
+  orderEvents  OrderEvent[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+/// Server-side session. The id is the SHA-256 of the random token held in the admin's cookie.
+model AdminSession {
+  id        String    @id
+  adminId   String
+  admin     AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@index([adminId])
+}
+
+/// A snapshot of what was bought, so later product edits never change past orders
+model OrderItem {
+  id          String          @id @default(cuid())
+  orderId     String
+  order       Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId   String?
+  variant     ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  productName String
+  productSlug String
+  imageUrl    String?
+  color       String
+  size        String?
+  sku         String
+  unitPrice   Int
+  quantity    Int
+  lineTotal   Int
+
+  @@index([orderId])
+}

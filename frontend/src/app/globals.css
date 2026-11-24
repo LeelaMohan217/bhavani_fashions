@@ -1,0 +1,204 @@
+@import "tailwindcss";
+
+/*
+ * Bhavani Fashion — "Modern editorial" design tokens
+ * Off-white canvas, near-black ink, a single muted terracotta accent.
+ */
+@theme {
+  --color-canvas: #f7f5f2;
+  --color-sand: #eeeae4;
+  --color-ink: #111111;
+  --color-ink-soft: #3a3633;
+  --color-stone: #75706a;
+  --color-line: #e2ddd6;
+  --color-clay: #a4573e;
+  --color-clay-deep: #87452f;
+
+  --font-display: var(--font-fraunces), "Times New Roman", serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --tracking-label: 0.22em;
+
+  --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --animate-marquee: marquee 40s linear infinite;
+  --animate-rise: rise 0.9s var(--ease-editorial) both;
+  --animate-fade-in: fade-in 0.4s ease-out both;
+  --animate-slide-in: slide-in 0.55s var(--ease-editorial) both;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slide-in {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+
+  --animate-slide-in-right: slide-in-right 0.55s var(--ease-editorial) both;
+  --animate-sidebar-in: sidebar-in 0.5s var(--ease-editorial) both;
+  --animate-palette-in: palette-in 0.22s var(--ease-editorial) both;
+
+  @keyframes palette-in {
+    from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  @keyframes sidebar-in {
+    from { opacity: 0; transform: translateX(-12px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes slide-in-right {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  ::selection {
+    background: var(--color-clay);
+    color: var(--color-canvas);
+  }
+
+  :focus-visible {
+    outline: 1.5px solid var(--color-ink);
+    outline-offset: 3px;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+}
+
+@layer components {
+  /* Small uppercase label used above headings and on tags */
+  .eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+  }
+
+  /* Display serif with optical sizing for large editorial headings */
+  .display {
+    font-family: var(--font-display);
+    font-weight: 350;
+    letter-spacing: -0.02em;
+    line-height: 1.02;
+    font-optical-sizing: auto;
+  }
+
+  /* Underline that draws in from the left on hover */
+  .link-draw {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0% 1px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    transition: background-size 0.5s var(--ease-editorial);
+  }
+  .link-draw:hover,
+  .link-draw:focus-visible {
+    background-size: 100% 1px;
+  }
+
+}
+
+/* Page gutter. Declared with @utility so responsive variants such as md:container-x work. */
+@utility container-x {
+  width: 100%;
+  margin-inline: auto;
+  max-width: 90rem;
+  padding-inline: 1.25rem;
+
+  @media (min-width: 768px) {
+    padding-inline: 2.5rem;
+  }
+}
+
+/*
+ * Admin entrance motion — blocks marked [data-rise] (page headers, cards, stat tiles)
+ * rise from below in sequence, then rows inside them follow. Rows added later
+ * (e.g. a new variant or image in the editor) animate in the same way.
+ */
+@keyframes admin-rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes admin-row {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+[data-admin-main] [data-rise] {
+  animation: admin-rise 0.7s var(--ease-editorial) both;
+}
+[data-admin-main] [data-rise]:nth-child(2) { animation-delay: 70ms; }
+[data-admin-main] [data-rise]:nth-child(3) { animation-delay: 140ms; }
+[data-admin-main] [data-rise]:nth-child(4) { animation-delay: 210ms; }
+[data-admin-main] [data-rise]:nth-child(5) { animation-delay: 280ms; }
+[data-admin-main] [data-rise]:nth-child(n + 6) { animation-delay: 350ms; }
+
+[data-admin-main] [data-rise] tbody > tr,
+[data-admin-main] [data-rise] ul > li,
+[data-admin-main] [data-rise] ol > li {
+  animation: admin-row 0.55s var(--ease-editorial) both;
+  animation-delay: 220ms;
+}
+[data-admin-main] [data-rise] :is(tbody > tr, ul > li, ol > li):nth-child(2) { animation-delay: 280ms; }
+[data-admin-main] [data-rise] :is(tbody > tr, ul > li, ol > li):nth-child(3) { animation-delay: 340ms; }
+[data-admin-main] [data-rise] :is(tbody > tr, ul > li, ol > li):nth-child(4) { animation-delay: 400ms; }
+[data-admin-main] [data-rise] :is(tbody > tr, ul > li, ol > li):nth-child(5) { animation-delay: 460ms; }
+[data-admin-main] [data-rise] :is(tbody > tr, ul > li, ol > li):nth-child(6) { animation-delay: 520ms; }
+[data-admin-main] [data-rise] :is(tbody > tr, ul > li, ol > li):nth-child(7) { animation-delay: 580ms; }
+[data-admin-main] [data-rise] :is(tbody > tr, ul > li, ol > li):nth-child(8) { animation-delay: 640ms; }
+[data-admin-main] [data-rise] :is(tbody > tr, ul > li, ol > li):nth-child(n + 9) { animation-delay: 700ms; }
+
+/* Content inside collapsed <details> never renders its entrance animation, so it would
+   stay invisible when opened — let expandable sections reveal their rows instantly. */
+[data-admin-main] [data-rise] details li {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-admin-main] *,
+  [data-admin-main] *::before,
+  [data-admin-main] *::after,
+  .animate-sidebar-in {
+    animation-delay: 0ms !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
