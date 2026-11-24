@@ -202,3 +202,13 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Height of the phone bottom tab bar (0 on tablet/desktop, where the rail/sidebar is used) */
+.admin-shell {
+  --bottom-nav-h: calc(4rem + env(safe-area-inset-bottom));
+}
+@media (min-width: 48rem) {
+  .admin-shell {
+    --bottom-nav-h: 0px;
+  }
+}

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, ExternalLink, LogOut, Menu, PackageCheck, Receipt, RotateCcw, TriangleAlert } from "lucide-react";
+import { Bell, ExternalLink, LogOut, PackageCheck, Receipt, RotateCcw, TriangleAlert } from "lucide-react";
 import { logout } from "@/lib/admin/actions";
 import type { Admin, AdminAlerts } from "@/lib/admin/types";
 import { formatPrice } from "@/lib/format";
@@ -16,19 +16,10 @@ const initials = (name: string) =>
     .join("")
     .toUpperCase();
 
-export function TopBar({ admin, alerts, onOpenNav }: { admin: Admin; alerts: AdminAlerts; onOpenNav: () => void }) {
+export function TopBar({ admin, alerts }: { admin: Admin; alerts: AdminAlerts }) {
   return (
     <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75">
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 md:px-8">
-        <button
-          type="button"
-          onClick={onOpenNav}
-          aria-label="Open navigation"
-          className="-ml-1.5 inline-flex size-9 shrink-0 items-center justify-center rounded-md hover:bg-neutral-100 lg:hidden"
-        >
-          <Menu className="size-5" />
-        </button>
-
         <CommandPalette toFulfil={alerts.toFulfilCount} />
 
         <div className="ml-auto flex items-center gap-1">

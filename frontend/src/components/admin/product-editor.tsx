@@ -547,7 +547,7 @@ export function ProductEditor({ product, categories }: { product?: AdminProduct;
       </div>
 
       {/* Sticky save bar */}
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-neutral-200 bg-white/90 backdrop-blur transition-[left] duration-200 lg:left-[var(--sidebar-w,15rem)]">
+      <div className="fixed inset-x-0 bottom-[var(--bottom-nav-h,0px)] z-20 border-t border-neutral-200 bg-white/90 backdrop-blur transition-[left] duration-200 md:left-20 lg:left-[var(--sidebar-w,15rem)]">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 md:px-8">
           <p className="text-sm text-neutral-500" aria-live="polite">
             {pending ? (
