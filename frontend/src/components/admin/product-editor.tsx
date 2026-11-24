@@ -295,7 +295,7 @@ export function ProductEditor({ product, categories }: { product?: AdminProduct;
                       )}
                     </span>
                     <div className="min-w-0 flex-1 space-y-1.5">
-                      <p className="truncate font-mono text-[0.7rem] text-neutral-400" title={img.url}>{img.url}</p>
+                      <p className="truncate tabular-nums text-[0.7rem] text-neutral-400" title={img.url}>{img.url}</p>
                       <input
                         value={img.alt}
                         onChange={(e) => set("images", form.images.map((x, idx) => (idx === i ? { ...x, alt: e.target.value } : x)))}
@@ -409,7 +409,7 @@ export function ProductEditor({ product, categories }: { product?: AdminProduct;
                           placeholder="SKU"
                           aria-label={`SKU for variant ${i + 1}`}
                           aria-invalid={Boolean(errors[`variants.${i}.sku`]) || undefined}
-                          className={`${inputCls} font-mono text-xs`}
+                          className={`${inputCls} tabular-nums text-xs`}
                         />
                       </td>
                       <td className="px-2 py-2">

@@ -67,7 +67,7 @@ async function OrderContent({ params }: Pick<PageProps<"/admin/orders/[id]">, "p
                     </Link>
                     <p className="mt-0.5 text-xs text-neutral-500">
                       {item.color}
-                      {item.size && ` · Size ${item.size}`} · <span className="font-mono">{item.sku}</span>
+                      {item.size && ` · Size ${item.size}`} · <span className="tabular-nums">{item.sku}</span>
                     </p>
                   </div>
                   <span className="text-sm tabular-nums text-neutral-500">
@@ -133,7 +133,7 @@ async function OrderContent({ params }: Pick<PageProps<"/admin/orders/[id]">, "p
             </address>
             {o.trackingNumber && (
               <div className="mt-4 rounded-md bg-sky-50 px-3 py-2 text-sm text-sky-800">
-                {o.courierName} · <span className="font-mono">{o.trackingNumber}</span>
+                {o.courierName} · <span className="tabular-nums">{o.trackingNumber}</span>
               </div>
             )}
           </Card>
@@ -158,7 +158,7 @@ function Row({ label, value, mono = false }: { label: string; value: string; mon
   return (
     <div className="flex justify-between gap-4">
       <dt className="text-neutral-500">{label}</dt>
-      <dd className={`text-right tabular-nums ${mono ? "font-mono text-xs" : ""}`}>{value}</dd>
+      <dd className={`text-right tabular-nums ${mono ? "tabular-nums text-xs" : ""}`}>{value}</dd>
     </div>
   );
 }

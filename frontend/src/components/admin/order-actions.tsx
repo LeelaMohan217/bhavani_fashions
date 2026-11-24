@@ -95,7 +95,7 @@ export function OrderActions({ order }: { order: AdminOrder }) {
                   required
                   autoFocus
                   placeholder="e.g. 1234567890"
-                  className={`${inputCls} font-mono`}
+                  className={`${inputCls} tabular-nums`}
                 />
               </div>
               <div className="flex gap-2">

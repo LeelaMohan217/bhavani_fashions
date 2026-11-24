@@ -125,7 +125,7 @@ async function ProductsContent({ searchParams }: Pick<PageProps<"/admin/products
                       </span>
                       <span className="min-w-0">
                         <span className="block truncate font-medium">{p.name}</span>
-                        <span className="mt-0.5 block truncate font-mono text-xs text-neutral-500">
+                        <span className="mt-0.5 block truncate tabular-nums text-xs text-neutral-500">
                           {p.variantCount} {p.variantCount === 1 ? "variant" : "variants"}
                         </span>
                       </span>
@@ -150,7 +150,7 @@ async function ProductsContent({ searchParams }: Pick<PageProps<"/admin/products
                       {p.isFeatured && <Badge tone="violet">Featured</Badge>}
                     </div>
                   </td>
-                  <td className={`${td} hidden whitespace-nowrap font-mono text-xs text-neutral-500 xl:table-cell`}>{formatStamp(p.updatedAt)}</td>
+                  <td className={`${td} hidden whitespace-nowrap tabular-nums text-xs text-neutral-500 xl:table-cell`}>{formatStamp(p.updatedAt)}</td>
                   <td className={`${td} w-20`}>
                     {/* Raised above the row-wide link so these stay clickable */}
                     <div className="relative z-10 flex justify-end gap-0.5">

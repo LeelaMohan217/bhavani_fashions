@@ -120,12 +120,12 @@ async function OrdersContent({ searchParams }: Pick<PageProps<"/admin/orders">, 
                             <Link href={`/admin/orders/${o.id}`} className="block truncate font-medium after:absolute after:inset-0">
                               {o.fullName}
                             </Link>
-                            <p className="truncate font-mono text-xs text-neutral-500">+91 {o.phone}</p>
+                            <p className="truncate tabular-nums text-xs text-neutral-500">+91 {o.phone}</p>
                           </div>
                         </div>
                       </td>
                       <td className={td}>
-                        <p className="font-mono text-xs text-neutral-700">{o.number}</p>
+                        <p className="tabular-nums text-xs text-neutral-700">{o.number}</p>
                         <p className="mt-0.5 text-xs text-neutral-500">
                           {o.city} · {o.pieces} {o.pieces === 1 ? "piece" : "pieces"}
                         </p>
@@ -139,7 +139,7 @@ async function OrdersContent({ searchParams }: Pick<PageProps<"/admin/orders">, 
                       <td className={td}>
                         <OrderStatusBadge status={o.status} />
                       </td>
-                      <td className={`${td} whitespace-nowrap font-mono text-xs text-neutral-500`}>{formatStamp(o.createdAt)}</td>
+                      <td className={`${td} whitespace-nowrap tabular-nums text-xs text-neutral-500`}>{formatStamp(o.createdAt)}</td>
                       <td className={`${td} text-right font-medium tabular-nums`}>{formatPrice(o.total)}</td>
                       <td className={`${td} w-12 text-right`}>
                         {/* Sits above the row-wide link so it stays clickable */}
@@ -164,7 +164,7 @@ async function OrdersContent({ searchParams }: Pick<PageProps<"/admin/orders">, 
                         <span className="truncate text-sm font-medium">{o.fullName}</span>
                         <span className="text-sm font-medium tabular-nums">{formatPrice(o.total)}</span>
                       </div>
-                      <p className="mt-0.5 font-mono text-xs text-neutral-500">
+                      <p className="mt-0.5 tabular-nums text-xs text-neutral-500">
                         {o.number} · {formatStamp(o.createdAt)}
                       </p>
                       <div className="mt-2 flex flex-wrap gap-1.5">

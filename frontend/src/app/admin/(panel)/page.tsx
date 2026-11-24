@@ -169,7 +169,7 @@ async function DashboardContent() {
                         {v.color}
                         {v.size && ` · ${v.size}`}
                       </td>
-                      <td className="px-5 py-3 font-mono text-xs text-neutral-500">{v.sku}</td>
+                      <td className="px-5 py-3 tabular-nums text-xs text-neutral-500">{v.sku}</td>
                       <td className="px-5 py-3 text-right">
                         <span className={`font-semibold tabular-nums ${v.stock === 0 ? "text-red-600" : "text-amber-700"}`}>
                           {v.stock === 0 ? "Sold out" : v.stock}
