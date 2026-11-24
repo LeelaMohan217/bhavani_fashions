@@ -5,6 +5,7 @@ import { getCategories, getCategory, getProducts } from "@/lib/api";
 import type { SortOption } from "@/lib/types";
 import { ProductCard } from "./product-card";
 import { SortSelect } from "./sort-select";
+import { FilterSheet } from "./filter-sheet";
 import { ProductGridSkeleton } from "./skeletons";
 
 const SORTS: SortOption[] = ["featured", "newest", "price-asc", "price-desc"];
@@ -80,8 +81,16 @@ export async function ProductListing({
       </header>
 
       <div className="sticky top-[4.5rem] z-30 border-y border-line bg-canvas/90 backdrop-blur-md md:top-20">
-        <div className="container-x flex items-center justify-between gap-4 py-2">
-          <ul className="-mx-1 flex gap-1 overflow-x-auto [scrollbar-width:none]">
+        <div className="container-x flex items-center justify-between gap-4 py-2.5 md:py-2">
+          {/* Phone: one Filter button that opens a sheet. Tablet/desktop: inline chips + sort. */}
+          <FilterSheet
+            categories={categories.map((c) => ({ slug: c.slug, name: c.name }))}
+            categorySlug={categorySlug}
+            onlyNew={onlyNew}
+            sort={sort}
+            total={list.total}
+          />
+          <ul className="-mx-1 hidden gap-1 overflow-x-auto [scrollbar-width:none] md:flex">
             <FilterChip href="/shop" active={!categorySlug && !onlyNew}>All</FilterChip>
             {categories.map((c) => (
               <FilterChip key={c.slug} href={`/shop/${c.slug}`} active={c.slug === categorySlug}>
@@ -90,12 +99,14 @@ export async function ProductListing({
             ))}
             <FilterChip href="/shop?filter=new" active={!categorySlug && onlyNew}>New in</FilterChip>
           </ul>
-          <SortSelect value={sort} />
+          <div className="hidden md:block">
+            <SortSelect value={sort} />
+          </div>
         </div>
       </div>
 
       <section className="container-x pb-24 pt-10 md:pb-32 md:pt-12">
-        <p className="eyebrow mb-8 text-stone">
+        <p className="eyebrow mb-8 hidden text-stone md:block">
           {list.total} {list.total === 1 ? "piece" : "pieces"}
         </p>
 

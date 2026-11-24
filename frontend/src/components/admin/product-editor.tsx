@@ -7,9 +7,14 @@ import { saveProduct } from "@/lib/admin/actions";
 import type { AdminCategory, AdminProduct } from "@/lib/admin/types";
 import { discountPercent, formatPrice } from "@/lib/format";
 import { Card, btn, inputCls } from "./ui";
+import { Select } from "@/components/ui/select";
+import { SuggestInput } from "@/components/ui/suggest-input";
 
 const IMAGE_HOSTS = ["images.unsplash.com", "res.cloudinary.com"];
 const SIZE_RUN = ["XS", "S", "M", "L", "XL"];
+const SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
+const FABRICS = ["Silk", "Cotton", "Organza", "Georgette", "Chanderi", "Linen", "Crepe", "Velvet", "Tussar Silk"];
+const OCCASIONS = ["Wedding", "Festive", "Party", "Everyday", "Work", "Sangeet", "Haldi", "Ceremony"];
 
 type VariantRow = { key: string; id?: string; sku: string; color: string; colorHex: string; size: string; stock: string };
 type ImageRow = { key: string; url: string; alt: string };
@@ -393,10 +398,11 @@ export function ProductEditor({ product, categories }: { product?: AdminProduct;
                         </div>
                       </td>
                       <td className="px-2 py-2">
-                        <input
+                        <SuggestInput
                           value={v.size}
                           onChange={(e) => updateVariant(i, { size: e.target.value.toUpperCase() })}
-                          list="size-options"
+                          suggestions={SIZES}
+                          onPick={(size) => updateVariant(i, { size })}
                           placeholder="Free"
                           aria-label={`Size for variant ${i + 1}`}
                           className={inputCls}
@@ -437,11 +443,6 @@ export function ProductEditor({ product, categories }: { product?: AdminProduct;
                   ))}
                 </tbody>
               </table>
-              <datalist id="size-options">
-                {["XS", "S", "M", "L", "XL", "XXL"].map((s) => (
-                  <option key={s} value={s} />
-                ))}
-              </datalist>
             </div>
             {variantErrors.length > 0 && (
               <ul className="space-y-0.5 border-t border-red-100 bg-red-50 px-4 py-2.5 text-xs text-red-700">
@@ -507,35 +508,37 @@ export function ProductEditor({ product, categories }: { product?: AdminProduct;
             <div className="space-y-4">
               <div>
                 <Label htmlFor="categoryId">Category</Label>
-                <select
+                <Select
                   id="categoryId"
+                  tone="admin"
                   value={form.categoryId}
-                  onChange={(e) => set("categoryId", e.target.value)}
-                  className={inputCls}
-                >
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
+                  onChange={(v) => set("categoryId", v)}
+                  options={categories.map((c) => ({ value: c.id, label: c.name }))}
+                  placeholder="Choose a category"
+                  invalid={Boolean(errors.categoryId)}
+                  className={`${inputCls} flex items-center gap-2 text-left`}
+                />
                 {err("categoryId")}
               </div>
               <div>
                 <Label htmlFor="fabric">Fabric</Label>
-                <input {...field("fabric")} placeholder="e.g. Silk" list="fabric-options" className={inputCls} />
-                <datalist id="fabric-options">
-                  {["Silk", "Cotton", "Organza", "Georgette", "Chanderi", "Linen", "Crepe", "Velvet", "Tussar Silk"].map((f) => (
-                    <option key={f} value={f} />
-                  ))}
-                </datalist>
+                <SuggestInput
+                  {...field("fabric")}
+                  placeholder="e.g. Silk"
+                  suggestions={FABRICS}
+                  onPick={(v) => set("fabric", v)}
+                  className={inputCls}
+                />
               </div>
               <div>
                 <Label htmlFor="occasion">Occasion</Label>
-                <input {...field("occasion")} placeholder="e.g. Wedding" list="occasion-options" className={inputCls} />
-                <datalist id="occasion-options">
-                  {["Wedding", "Festive", "Party", "Everyday", "Work", "Sangeet", "Haldi", "Ceremony"].map((o) => (
-                    <option key={o} value={o} />
-                  ))}
-                </datalist>
+                <SuggestInput
+                  {...field("occasion")}
+                  placeholder="e.g. Wedding"
+                  suggestions={OCCASIONS}
+                  onPick={(v) => set("occasion", v)}
+                  className={inputCls}
+                />
               </div>
               <div>
                 <Label htmlFor="care">Care instructions</Label>

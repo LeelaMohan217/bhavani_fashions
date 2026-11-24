@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, LoaderCircle } from "lucide-react";
 import { setProductActive } from "@/lib/admin/actions";
@@ -10,23 +10,42 @@ import { rowAction } from "./ui";
 export function ProductVisibilityToggle({ id, isActive, name }: { id: string; isActive: boolean; name: string }) {
   const router = useRouter();
   const [pending, start] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  // Our own error bubble instead of the browser's alert(); clears itself after a few seconds
+  useEffect(() => {
+    if (!error) return;
+    const t = setTimeout(() => setError(null), 5000);
+    return () => clearTimeout(t);
+  }, [error]);
 
   return (
-    <button
-      type="button"
-      disabled={pending}
-      onClick={() =>
-        start(async () => {
-          const res = await setProductActive(id, !isActive);
-          if (res.ok) router.refresh();
-          else alert(res.error);
-        })
-      }
-      aria-label={isActive ? `Hide ${name} from the store` : `Show ${name} in the store`}
-      title={isActive ? "Hide from store" : "Show in store"}
-      className={rowAction}
-    >
-      {pending ? <LoaderCircle className="size-4 animate-spin" /> : isActive ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-    </button>
+    <span className="relative inline-flex">
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() =>
+          start(async () => {
+            setError(null);
+            const res = await setProductActive(id, !isActive);
+            if (res.ok) router.refresh();
+            else setError(res.error);
+          })
+        }
+        aria-label={isActive ? `Hide ${name} from the store` : `Show ${name} in the store`}
+        title={isActive ? "Hide from store" : "Show in store"}
+        className={rowAction}
+      >
+        {pending ? <LoaderCircle className="size-4 animate-spin" /> : isActive ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+      </button>
+      {error && (
+        <span
+          role="alert"
+          className="absolute right-full top-1/2 z-20 mr-2 w-max max-w-56 -translate-y-1/2 animate-palette-in rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-left text-xs text-red-700 shadow-md"
+        >
+          {error}
+        </span>
+      )}
+    </span>
   );
 }

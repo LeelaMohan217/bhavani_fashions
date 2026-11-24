@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { placeOrder, verifyPayment, type CheckoutForm as FormValues } from "@/lib/cart-actions";
 import { formatPrice } from "@/lib/format";
+import { Select } from "@/components/ui/select";
 import { INDIAN_STATES } from "@/lib/india";
 import type { Cart, CheckoutConfig, PaymentMethod } from "@/lib/types";
 import { useCart } from "../cart/cart-provider";
@@ -181,24 +182,22 @@ export function CheckoutForm({ config }: { config: CheckoutConfig }) {
               <div className="sm:col-span-2">
                 <label htmlFor="state" className="eyebrow text-stone">State</label>
                 <div className="relative mt-2">
-                  <select
+                  <Select
                     id="state"
                     name="state"
-                    autoComplete="address-level1"
                     value={values.state}
-                    onChange={set("state")}
-                    aria-invalid={Boolean(errors.state)}
-                    aria-describedby={errors.state ? "state-error" : undefined}
-                    className={`h-12 w-full appearance-none border bg-transparent px-4 pr-10 text-sm transition-colors focus:border-ink focus:outline-none ${
+                    onChange={(v) => {
+                      setValues((cur) => ({ ...cur, state: v }));
+                      if (errors.state) setErrors((er) => ({ ...er, state: undefined }));
+                    }}
+                    options={INDIAN_STATES.map((st) => ({ value: st, label: st }))}
+                    placeholder="Select your state"
+                    invalid={Boolean(errors.state)}
+                    describedBy={errors.state ? "state-error" : undefined}
+                    className={`flex h-12 w-full items-center gap-3 border bg-transparent px-4 text-sm transition-colors focus:border-ink focus:outline-none aria-expanded:border-ink ${
                       errors.state ? "border-clay" : "border-line"
                     } ${values.state ? "text-ink" : "text-stone"}`}
-                  >
-                    <option value="" disabled>Select your state</option>
-                    {INDIAN_STATES.map((s) => (
-                      <option key={s} value={s} className="text-ink">{s}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 text-stone" strokeWidth={1.5} />
+                  />
                 </div>
                 {errors.state && <p id="state-error" className="mt-1.5 text-xs text-clay">{errors.state}</p>}
               </div>

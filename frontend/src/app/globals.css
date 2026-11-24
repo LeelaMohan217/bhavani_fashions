@@ -39,6 +39,12 @@
   --animate-slide-in-right: slide-in-right 0.55s var(--ease-editorial) both;
   --animate-sidebar-in: sidebar-in 0.5s var(--ease-editorial) both;
   --animate-palette-in: palette-in 0.22s var(--ease-editorial) both;
+  --animate-sheet-up: sheet-up 0.4s var(--ease-editorial) both;
+
+  @keyframes sheet-up {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
 
   @keyframes palette-in {
     from { opacity: 0; transform: translateY(-8px) scale(0.98); }
@@ -211,4 +217,15 @@
   .admin-shell {
     --bottom-nav-h: 0px;
   }
+}
+
+/* Hide the browser's number-input spin arrows everywhere — we use our own controls */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }

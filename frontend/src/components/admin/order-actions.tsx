@@ -8,6 +8,7 @@ import type { AdminOrder } from "@/lib/admin/types";
 import type { OrderStatus } from "@/lib/types";
 import { formatPrice } from "@/lib/format";
 import { btn, inputCls } from "./ui";
+import { Select } from "@/components/ui/select";
 
 const COURIERS = ["Shiprocket", "Delhivery", "Blue Dart", "DTDC", "India Post", "Ekart", "Xpressbees"];
 
@@ -80,11 +81,14 @@ export function OrderActions({ order }: { order: AdminOrder }) {
             >
               <div>
                 <label htmlFor="courier" className="mb-1.5 block text-xs font-medium text-neutral-600">Courier</label>
-                <select id="courier" value={courier} onChange={(e) => setCourier(e.target.value)} className={inputCls}>
-                  {COURIERS.map((c) => (
-                    <option key={c}>{c}</option>
-                  ))}
-                </select>
+                <Select
+                  id="courier"
+                  tone="admin"
+                  value={courier}
+                  onChange={setCourier}
+                  options={COURIERS.map((c) => ({ value: c, label: c }))}
+                  className={`${inputCls} flex items-center gap-2 text-left`}
+                />
               </div>
               <div>
                 <label htmlFor="tracking" className="mb-1.5 block text-xs font-medium text-neutral-600">Tracking number</label>
