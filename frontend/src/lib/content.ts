@@ -9,6 +9,7 @@ export const NAV_LINKS = [
   { label: "Lehengas", href: "/shop/lehengas" },
   { label: "Kurta Sets", href: "/shop/kurta-sets" },
   { label: "New In", href: "/shop?filter=new" },
+  { label: "Sale", href: "/shop?filter=sale" },
 ] as const;
 
 export const HERO = {

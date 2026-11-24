@@ -21,6 +21,17 @@ import {
   setProductActive,
   updateProduct,
 } from "../services/admin-products.js";
+import {
+  BannerInput,
+  BannerOrder,
+  createBanner,
+  deleteBanner,
+  getBanner,
+  listAllBanners,
+  reorderBanners,
+  setBannerActive,
+  updateBanner,
+} from "../services/banners.js";
 
 export const adminRouter = Router();
 
@@ -74,6 +85,31 @@ adminRouter.put("/products/:id", async (req, res) => {
 adminRouter.patch("/products/:id/status", async (req, res) => {
   const { isActive } = z.object({ isActive: z.boolean() }).parse(req.body);
   res.json(await setProductActive(req.params.id, isActive));
+});
+
+// Home-page banners
+adminRouter.get("/banners", async (_req, res) => {
+  res.json(await listAllBanners());
+});
+adminRouter.put("/banners/order", async (req, res) => {
+  res.json(await reorderBanners(BannerOrder.parse(req.body).ids));
+});
+adminRouter.get("/banners/:id", async (req, res) => {
+  res.json(await getBanner(req.params.id));
+});
+adminRouter.post("/banners", async (req, res) => {
+  res.status(201).json(await createBanner(BannerInput.parse(req.body)));
+});
+adminRouter.put("/banners/:id", async (req, res) => {
+  res.json(await updateBanner(req.params.id, BannerInput.parse(req.body)));
+});
+adminRouter.patch("/banners/:id/status", async (req, res) => {
+  const { isActive } = z.object({ isActive: z.boolean() }).parse(req.body);
+  res.json(await setBannerActive(req.params.id, isActive));
+});
+adminRouter.delete("/banners/:id", async (req, res) => {
+  await deleteBanner(req.params.id);
+  res.status(204).end();
 });
 
 // Orders

@@ -159,3 +159,31 @@ export type ProductPayload = Omit<AdminProduct, "id" | "fabric" | "occasion" | "
   occasion?: string;
   care?: string;
 };
+
+export type AdminBanner = {
+  id: string;
+  eyebrow: string | null;
+  title: string;
+  highlight: string | null;
+  subtitle: string | null;
+  ctaLabel: string;
+  ctaHref: string;
+  imageUrl: string;
+  imageAlt: string;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type BannerPayload = {
+  eyebrow: string;
+  title: string;
+  highlight: string;
+  subtitle: string;
+  ctaLabel: string;
+  ctaHref: string;
+  imageUrl: string;
+  imageAlt: string;
+  isActive: boolean;
+};

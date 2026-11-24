@@ -9,7 +9,7 @@ import { SORT_OPTIONS } from "./sort-select";
 
 type Category = { slug: string; name: string };
 
-/** "all", "new" or a category slug */
+/** "all", "new", "sale" or a category slug */
 type Show = string;
 
 /** Phone-only filter button + bottom sheet with category and sort options. */
@@ -17,18 +17,20 @@ export function FilterSheet({
   categories,
   categorySlug,
   onlyNew,
+  onlySale = false,
   sort,
   total,
 }: {
   categories: Category[];
   categorySlug?: string;
   onlyNew: boolean;
+  onlySale?: boolean;
   sort: SortOption;
   total: number;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const current: Show = categorySlug ?? (onlyNew ? "new" : "all");
+  const current: Show = categorySlug ?? (onlyNew ? "new" : onlySale ? "sale" : "all");
   const [open, setOpen] = useState(false);
   const [show, setShow] = useState<Show>(current);
   const [sortBy, setSortBy] = useState<SortOption>(sort);
@@ -53,9 +55,9 @@ export function FilterSheet({
 
   const apply = () => {
     const params = new URLSearchParams();
-    if (show === "new") params.set("filter", "new");
+    if (show === "new" || show === "sale") params.set("filter", show);
     if (sortBy !== "featured") params.set("sort", sortBy);
-    const path = show === "all" || show === "new" ? "/shop" : `/shop/${show}`;
+    const path = show === "all" || show === "new" || show === "sale" ? "/shop" : `/shop/${show}`;
     const qs = params.toString();
     setOpen(false);
     startTransition(() => router.push(`${path}${qs ? `?${qs}` : ""}`));
@@ -68,6 +70,7 @@ export function FilterSheet({
     { value: "all", label: "All" },
     ...categories.map((c) => ({ value: c.slug, label: c.name })),
     { value: "new", label: "New in" },
+    { value: "sale", label: "Sale" },
   ];
 
   return (

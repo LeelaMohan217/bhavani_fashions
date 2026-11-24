@@ -2,9 +2,10 @@
 
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { updateTag } from "next/cache";
 import type { ActionResult, OrderStatus } from "../types";
 import { ADMIN_COOKIE, API_URL, AdminApiError, adminFetch } from "./api";
-import type { AdminOrder, AdminProduct, ProductPayload } from "./types";
+import type { AdminBanner, AdminOrder, AdminProduct, BannerPayload, ProductPayload } from "./types";
 
 function fail(e: unknown): { ok: false; error: string; fieldErrors?: Record<string, string> } {
   // redirect() works by throwing — let it through
@@ -112,6 +113,52 @@ export async function setProductActive(id: string, isActive: boolean): Promise<A
       body: { isActive },
     });
     return { ok: true, isActive: res.isActive };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+// ─── Home-page banners ───────────────────────────────────────────────────────
+// Each change refreshes the storefront's cached banners straight away.
+
+export async function saveBanner(id: string | null, payload: BannerPayload): Promise<ActionResult<{ banner: AdminBanner }>> {
+  try {
+    const banner = await adminFetch<AdminBanner>(id ? `/banners/${encodeURIComponent(id)}` : "/banners", {
+      method: id ? "PUT" : "POST",
+      body: payload,
+    });
+    updateTag("banners");
+    return { ok: true, banner };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function setBannerActive(id: string, isActive: boolean): Promise<ActionResult<{ isActive: boolean }>> {
+  try {
+    const res = await adminFetch<AdminBanner>(`/banners/${encodeURIComponent(id)}/status`, { method: "PATCH", body: { isActive } });
+    updateTag("banners");
+    return { ok: true, isActive: res.isActive };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function deleteBanner(id: string): Promise<ActionResult<object>> {
+  try {
+    await adminFetch(`/banners/${encodeURIComponent(id)}`, { method: "DELETE" });
+    updateTag("banners");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function reorderBanners(ids: string[]): Promise<ActionResult<{ banners: AdminBanner[] }>> {
+  try {
+    const banners = await adminFetch<AdminBanner[]>("/banners/order", { method: "PUT", body: { ids } });
+    updateTag("banners");
+    return { ok: true, banners };
   } catch (e) {
     return fail(e);
   }

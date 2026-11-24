@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ExternalLink, LayoutDashboard, LifeBuoy, MoreHorizontal, PanelLeftClose, PanelLeftOpen, Receipt, Settings, Shirt, X } from "lucide-react";
+import { ExternalLink, GalleryHorizontalEnd, LayoutDashboard, LifeBuoy, MoreHorizontal, PanelLeftClose, PanelLeftOpen, Receipt, Settings, Shirt, X } from "lucide-react";
 import type { Admin, AdminAlerts } from "@/lib/admin/types";
 import { TopBar } from "./top-bar";
 
@@ -11,6 +11,7 @@ const NAV = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/orders", label: "Orders", icon: Receipt, badgeKey: "toFulfil" as const },
   { href: "/admin/products", label: "Products", icon: Shirt },
+  { href: "/admin/banners", label: "Banners", icon: GalleryHorizontalEnd },
 ];
 
 const FOOTER_NAV = [

@@ -1,7 +1,7 @@
 // Server-side data access for the storefront. Results are cached for a few minutes
 // with Next.js Cache Components ("use cache") and tagged so they can be revalidated.
 import { cacheLife, cacheTag } from "next/cache";
-import type { Category, CheckoutConfig, OrderDetail, ProductDetail, ProductList, SortOption } from "./types";
+import type { Banner, Category, CheckoutConfig, OrderDetail, ProductDetail, ProductList, SortOption } from "./types";
 
 const API_URL = process.env.API_URL ?? "http://localhost:4000";
 
@@ -41,6 +41,8 @@ export type ProductQuery = {
   category?: string;
   featured?: boolean;
   isNew?: boolean;
+  /** Only marked-down products */
+  sale?: boolean;
   sort?: SortOption;
   page?: number;
   pageSize?: number;
@@ -56,6 +58,7 @@ export async function getProducts(query: ProductQuery = {}): Promise<ProductList
   if (query.category) params.set("category", query.category);
   if (query.featured !== undefined) params.set("featured", String(query.featured));
   if (query.isNew !== undefined) params.set("new", String(query.isNew));
+  if (query.sale) params.set("sale", "true");
   if (query.sort) params.set("sort", query.sort);
   if (query.page) params.set("page", String(query.page));
   if (query.pageSize) params.set("pageSize", String(query.pageSize));
@@ -89,4 +92,12 @@ export async function getProduct(slug: string): Promise<ProductDetail | null> {
     if (e instanceof ApiError && e.status === 404) return null;
     throw e;
   }
+}
+
+/** Live home-page banners, in order. Admin saves refresh this immediately via the "banners" tag. */
+export async function getBanners(): Promise<Banner[]> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("banners");
+  return get<Banner[]>("/api/banners");
 }

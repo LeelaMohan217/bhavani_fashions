@@ -62,6 +62,19 @@ export type ProductList = {
   totalPages: number;
 };
 
+/** Home-page offer banner (managed in Admin → Banners) */
+export type Banner = {
+  id: string;
+  eyebrow: string | null;
+  title: string;
+  highlight: string | null;
+  subtitle: string | null;
+  ctaLabel: string;
+  ctaHref: string;
+  imageUrl: string;
+  imageAlt: string;
+};
+
 export type SortOption = "featured" | "newest" | "price-asc" | "price-desc";
 
 // ─── Cart & checkout ─────────────────────────────────────────────────────────

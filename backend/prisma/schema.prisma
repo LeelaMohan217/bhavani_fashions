@@ -233,3 +233,24 @@ model OrderItem {
 
   @@index([orderId])
 }
+
+/// Home-page offer banners, managed from the admin panel
+model Banner {
+  id        String   @id @default(cuid())
+  /// Small label above the headline, e.g. "The Festive Edit"
+  eyebrow   String?
+  /// Headline; the part in `highlight` is shown in italics after it
+  title     String
+  highlight String?
+  subtitle  String?
+  ctaLabel  String
+  ctaHref   String
+  imageUrl  String
+  imageAlt  String   @default("")
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}

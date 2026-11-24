@@ -9,6 +9,7 @@ const COLUMNS = [
       ["Lehengas", "/shop/lehengas"],
       ["Kurta Sets", "/shop/kurta-sets"],
       ["New In", "/shop?filter=new"],
+      ["Sale", "/shop?filter=sale"],
     ],
   },
   {

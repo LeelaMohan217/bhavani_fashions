@@ -8,6 +8,7 @@ import {
   ArrowUp,
   CornerDownLeft,
   ExternalLink,
+  GalleryHorizontalEnd,
   History,
   LifeBuoy,
   PackageCheck,
@@ -220,6 +221,7 @@ function Palette({ toFulfil, onClose }: { toFulfil: number; onClose: () => void 
     const pages: Item[] = [
       { id: "p-orders", icon: Receipt, title: "Orders", subtitle: "All orders and their status", keywords: "orders sales customers", run: () => go("/admin/orders") },
       { id: "p-products", icon: Shirt, title: "Products", subtitle: "Catalogue, prices and stock", keywords: "products catalogue sarees lehengas stock inventory", run: () => go("/admin/products") },
+      { id: "p-banners", icon: GalleryHorizontalEnd, title: "Banners", subtitle: "Home-page offer banners", keywords: "banners home page offers slideshow hero promotions", run: () => go("/admin/banners") },
       { id: "p-settings", icon: Settings, title: "Settings", subtitle: "Payments, shipping and your account", keywords: "settings payments razorpay shipping account cod", run: () => go("/admin/settings") },
       { id: "p-help", icon: LifeBuoy, title: "Help & Support", subtitle: "Guides and keyboard shortcuts", keywords: "help support guides shortcuts faq", run: () => go("/admin/help") },
     ];

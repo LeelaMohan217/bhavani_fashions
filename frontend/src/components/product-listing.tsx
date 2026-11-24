@@ -25,12 +25,15 @@ export async function ProductListing({
   const sortParam = first(sp.sort) as SortOption | undefined;
   const sort: SortOption = sortParam && SORTS.includes(sortParam) ? sortParam : "featured";
   const page = Math.max(1, Number(first(sp.page)) || 1);
-  const onlyNew = first(sp.filter) === "new";
+  // "new" = new arrivals, "sale" = marked-down pieces (only on the all-products listing)
+  const filter = first(sp.filter);
+  const onlyNew = filter === "new";
+  const onlySale = filter === "sale";
 
   const [category, categories, list] = await Promise.all([
     categorySlug ? getCategory(categorySlug) : Promise.resolve(null),
     getCategories(),
-    getProducts({ category: categorySlug, isNew: onlyNew || undefined, sort, page, pageSize: 12 }),
+    getProducts({ category: categorySlug, isNew: onlyNew || undefined, sale: onlySale || undefined, sort, page, pageSize: 12 }),
   ]);
 
   if (categorySlug && !category) notFound();
@@ -38,6 +41,7 @@ export async function ProductListing({
   const pageHref = (p: number) => {
     const params = new URLSearchParams();
     if (onlyNew) params.set("filter", "new");
+    if (onlySale) params.set("filter", "sale");
     if (sort !== "featured") params.set("sort", sort);
     if (p > 1) params.set("page", String(p));
     const qs = params.toString();
@@ -47,12 +51,14 @@ export async function ProductListing({
   // A page past the end (old link, edited URL) goes to the last real page.
   if (page > list.totalPages) redirect(pageHref(list.totalPages));
 
-  const title = category?.name ?? (onlyNew ? "New arrivals" : "All pieces");
+  const title = category?.name ?? (onlyNew ? "New arrivals" : onlySale ? "On sale" : "All pieces");
   const intro =
     category?.description ??
     (onlyNew
       ? "The latest weaves and silhouettes, fresh from our artisans."
-      : "Every saree, lehenga and kurta set in the Bhavani collection.");
+      : onlySale
+        ? "Marked-down sarees, lehengas and kurta sets, while stocks last."
+        : "Every saree, lehenga and kurta set in the Bhavani collection.");
 
   return (
     <>
@@ -87,17 +93,19 @@ export async function ProductListing({
             categories={categories.map((c) => ({ slug: c.slug, name: c.name }))}
             categorySlug={categorySlug}
             onlyNew={onlyNew}
+            onlySale={onlySale}
             sort={sort}
             total={list.total}
           />
           <ul className="-mx-1 hidden gap-1 overflow-x-auto [scrollbar-width:none] md:flex">
-            <FilterChip href="/shop" active={!categorySlug && !onlyNew}>All</FilterChip>
+            <FilterChip href="/shop" active={!categorySlug && !onlyNew && !onlySale}>All</FilterChip>
             {categories.map((c) => (
               <FilterChip key={c.slug} href={`/shop/${c.slug}`} active={c.slug === categorySlug}>
                 {c.name}
               </FilterChip>
             ))}
             <FilterChip href="/shop?filter=new" active={!categorySlug && onlyNew}>New in</FilterChip>
+            <FilterChip href="/shop?filter=sale" active={!categorySlug && onlySale}>Sale</FilterChip>
           </ul>
           <div className="hidden md:block">
             <SortSelect value={sort} />

@@ -16,6 +16,8 @@ const ListQuery = z.object({
   category: z.string().optional(),
   featured: boolParam,
   new: boolParam,
+  /** Only products marked down (compare-at price above the price) */
+  sale: boolParam,
   color: z.string().optional(),
   fabric: z.string().optional(),
   minPrice: z.coerce.number().int().nonnegative().optional(),
@@ -79,6 +81,7 @@ productsRouter.get("/", async (req, res) => {
     ...(q.category && { category: { slug: q.category } }),
     ...(q.featured !== undefined && { isFeatured: q.featured }),
     ...(q.new !== undefined && { isNewArrival: q.new }),
+    ...(q.sale && { compareAtPrice: { gt: prisma.product.fields.price } }),
     ...(q.fabric && { fabric: { equals: q.fabric, mode: "insensitive" } }),
     ...(q.color && { variants: { some: { color: { equals: q.color, mode: "insensitive" } } } }),
     ...((q.minPrice !== undefined || q.maxPrice !== undefined) && {

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import type {
   Admin,
   AdminAlerts,
+  AdminBanner,
   AdminCategory,
   AdminOrder,
   AdminOrderList,
@@ -83,6 +84,17 @@ export const getProducts = (q: { status?: string; search?: string; category?: st
 export async function getProduct(id: string) {
   try {
     return await adminFetch<AdminProduct>(`/products/${encodeURIComponent(id)}`);
+  } catch (e) {
+    if (e instanceof AdminApiError && e.status === 404) return null;
+    throw e;
+  }
+}
+
+export const getBanners = () => adminFetch<AdminBanner[]>("/banners");
+
+export async function getBanner(id: string): Promise<AdminBanner | null> {
+  try {
+    return await adminFetch<AdminBanner>(`/banners/${encodeURIComponent(id)}`);
   } catch (e) {
     if (e instanceof AdminApiError && e.status === 404) return null;
     throw e;
