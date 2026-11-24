@@ -187,3 +187,14 @@ export type BannerPayload = {
   imageAlt: string;
   isActive: boolean;
 };
+
+export type AdminPromotion = {
+  id: string;
+  name: string;
+  percentOff: number;
+  startsAt: string | null;
+  endsAt: string;
+  isActive: boolean;
+};
+
+export type PromotionPayload = { name: string; percentOff: number; endsAt: string; isActive: boolean };

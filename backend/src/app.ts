@@ -8,6 +8,7 @@ import { cartsRouter } from "./routes/carts.js";
 import { checkoutRouter, ordersRouter } from "./routes/checkout.js";
 import { adminRouter } from "./routes/admin.js";
 import { bannersRouter } from "./routes/banners.js";
+import { promotionRouter } from "./routes/promotion.js";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler.js";
 
 export function createApp() {
@@ -25,6 +26,7 @@ export function createApp() {
   app.use("/api/categories", categoriesRouter);
   app.use("/api/products", productsRouter);
   app.use("/api/banners", bannersRouter);
+  app.use("/api/promotion", promotionRouter);
   app.use("/api/carts", cartsRouter);
   app.use("/api/checkout", checkoutRouter);
   app.use("/api/orders", ordersRouter);

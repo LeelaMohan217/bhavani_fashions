@@ -13,6 +13,9 @@
   --color-line: #e2ddd6;
   --color-clay: #a4573e;
   --color-clay-deep: #87452f;
+  /* Black Friday: night and gold */
+  --color-night: #0d0c0b;
+  --color-gold: #d9b26a;
 
   --font-display: var(--font-fraunces), "Times New Roman", serif;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;

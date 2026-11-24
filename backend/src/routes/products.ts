@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { Prisma } from "../../generated/prisma/client.js";
 import { prisma } from "../lib/prisma.js";
 import { notFound } from "../lib/http-error.js";
+import { getActivePromotion, withPromotion, type ActivePromotion } from "../services/promotions.js";
 
 export const productsRouter = Router();
 
@@ -43,11 +44,11 @@ const cardSelect = {
 
 type CardRow = Prisma.ProductGetPayload<{ select: typeof cardSelect }>;
 
-function toCard({ variants, ...p }: CardRow) {
+function toCard({ variants, ...p }: CardRow, promo: ActivePromotion | null) {
   const colors = new Map<string, string>();
   for (const v of variants) colors.set(v.color, v.colorHex);
   return {
-    ...p,
+    ...withPromotion(p, promo),
     colors: [...colors].map(([name, hex]) => ({ name, hex })),
     inStock: variants.some((v) => v.stock > 0),
   };
@@ -63,6 +64,7 @@ const orderByFor: Record<z.infer<typeof ListQuery>["sort"], Prisma.ProductOrderB
 // GET /api/products — filterable, sortable, paginated product list
 productsRouter.get("/", async (req, res) => {
   const q = ListQuery.parse(req.query);
+  const promo = await getActivePromotion();
 
   const where: Prisma.ProductWhereInput = {
     isActive: true,
@@ -81,7 +83,8 @@ productsRouter.get("/", async (req, res) => {
     ...(q.category && { category: { slug: q.category } }),
     ...(q.featured !== undefined && { isFeatured: q.featured }),
     ...(q.new !== undefined && { isNewArrival: q.new }),
-    ...(q.sale && { compareAtPrice: { gt: prisma.product.fields.price } }),
+    // During a store-wide promotion every piece is on sale
+    ...(q.sale && !promo && { compareAtPrice: { gt: prisma.product.fields.price } }),
     ...(q.fabric && { fabric: { equals: q.fabric, mode: "insensitive" } }),
     ...(q.color && { variants: { some: { color: { equals: q.color, mode: "insensitive" } } } }),
     ...((q.minPrice !== undefined || q.maxPrice !== undefined) && {
@@ -101,7 +104,7 @@ productsRouter.get("/", async (req, res) => {
   ]);
 
   res.json({
-    items: rows.map(toCard),
+    items: rows.map((r) => toCard(r, promo)),
     total,
     page: q.page,
     pageSize: q.pageSize,
@@ -132,5 +135,6 @@ productsRouter.get("/:slug", async (req, res) => {
     select: cardSelect,
   });
 
-  res.json({ ...product, related: related.map(toCard) });
+  const promo = await getActivePromotion();
+  res.json({ ...withPromotion(product, promo), related: related.map((r) => toCard(r, promo)) });
 });

@@ -2,18 +2,27 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import type { Banner } from "@/lib/types";
+import type { Banner, Promotion } from "@/lib/types";
 import { BannerSlide } from "./banner-slide";
+import { PromoSlide } from "@/components/promo/promo-slide";
+import { useCountdown } from "@/components/promo/countdown";
 
 const INTERVAL_MS = 6000;
 
 /** Home-page offer banners: swipe on phones, dots/arrows on desktop, auto-advances every 6s. */
-export function BannerCarousel({ banners }: { banners: Banner[] }) {
+export function BannerCarousel({ banners, promotion }: { banners: Banner[]; promotion: Promotion | null }) {
   const track = useRef<HTMLDivElement>(null);
   const [current, setCurrent] = useState(0);
   // Paused while the shopper hovers, focuses or touches the banners
   const [paused, setPaused] = useState(false);
-  const count = banners.length;
+  // A running store-wide offer gets its own first slide; it drops out the second the offer ends
+  const t = useCountdown(promotion?.endsAt ?? "1970-01-01T00:00:00Z");
+  const promo = promotion && !t?.ended ? promotion : null;
+  const slides = [
+    ...(promo ? [{ key: "promotion", node: (first: boolean) => <PromoSlide promo={promo} priority={first} /> }] : []),
+    ...banners.map((b) => ({ key: b.id, node: (first: boolean) => <BannerSlide banner={b} priority={first} promo={promo} /> })),
+  ];
+  const count = slides.length;
 
   const go = (i: number) => {
     const el = track.current;
@@ -61,15 +70,15 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
           ref={track}
           className="flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          {banners.map((b, i) => (
+          {slides.map((sl, i) => (
             <div
-              key={b.id}
+              key={sl.key}
               role="group"
               aria-roledescription="slide"
               aria-label={`${i + 1} of ${count}`}
               className="w-full shrink-0 snap-start"
             >
-              <BannerSlide banner={b} priority={i === 0} />
+              {sl.node(i === 0)}
             </div>
           ))}
         </div>
@@ -77,9 +86,9 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
         {count > 1 && (
           <>
             <div className="absolute bottom-6 left-6 flex items-center gap-2 md:bottom-8 md:left-14">
-              {banners.map((b, i) => (
+              {slides.map((sl, i) => (
                 <button
-                  key={b.id}
+                  key={sl.key}
                   type="button"
                   onClick={() => go(i)}
                   aria-label={`Show banner ${i + 1}`}

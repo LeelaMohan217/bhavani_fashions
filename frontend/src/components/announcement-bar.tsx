@@ -1,6 +1,25 @@
+import { connection } from "next/server";
+import { Suspense } from "react";
 import { PROMISES } from "@/lib/content";
+import { getPromotion } from "@/lib/api";
+import { PromoBar } from "./promo/promo-bar";
 
 export function AnnouncementBar() {
+  return (
+    <Suspense fallback={<PromisesBar />}>
+      <WithPromotion />
+    </Suspense>
+  );
+}
+
+/** During a store-wide offer (e.g. Black Friday) the top bar announces it instead. */
+async function WithPromotion() {
+  await connection();
+  const promo = await getPromotion().catch(() => null);
+  return promo ? <PromoBar promo={promo} fallback={<PromisesBar />} /> : <PromisesBar />;
+}
+
+function PromisesBar() {
   // Duplicated list so the marquee loops seamlessly
   const items = [...PROMISES, ...PROMISES];
 

@@ -6,6 +6,7 @@ import type {
   Admin,
   AdminAlerts,
   AdminBanner,
+  AdminPromotion,
   AdminCategory,
   AdminOrder,
   AdminOrderList,
@@ -100,3 +101,6 @@ export async function getBanner(id: string): Promise<AdminBanner | null> {
     throw e;
   }
 }
+
+/** The latest store-wide offer (running or not), or null */
+export const getPromotion = () => adminFetch<AdminPromotion | null>("/promotion");

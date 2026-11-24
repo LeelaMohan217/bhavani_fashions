@@ -1,7 +1,7 @@
 // Server-side data access for the storefront. Results are cached for a few minutes
 // with Next.js Cache Components ("use cache") and tagged so they can be revalidated.
 import { cacheLife, cacheTag } from "next/cache";
-import type { Banner, Category, CheckoutConfig, OrderDetail, ProductDetail, ProductList, SortOption } from "./types";
+import type { Banner, Category, Promotion, CheckoutConfig, OrderDetail, ProductDetail, ProductList, SortOption } from "./types";
 
 const API_URL = process.env.API_URL ?? "http://localhost:4000";
 
@@ -100,4 +100,12 @@ export async function getBanners(): Promise<Banner[]> {
   cacheLife("minutes");
   cacheTag("banners");
   return get<Banner[]>("/api/banners");
+}
+
+/** The store-wide offer running now (e.g. Black Friday), or null. Shoppers' pages hide it at endsAt. */
+export async function getPromotion(): Promise<Promotion | null> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("promotion");
+  return get<Promotion | null>("/api/promotion");
 }

@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, MessageCircle, RotateCcw, ShieldCheck, Truck } from "lucide-react";
 import { connection } from "next/server";
-import { getBanners, getCategories, getProducts } from "@/lib/api";
+import { getBanners, getCategories, getProducts, getPromotion } from "@/lib/api";
 import { discountPercent } from "@/lib/format";
 import { STORY } from "@/lib/content";
 import { ProductCard } from "@/components/product-card";
@@ -54,8 +54,8 @@ export default function HomePage() {
 async function Banners() {
   // Load at request time (not during the build) so deploys never depend on the API being up.
   await connection();
-  const banners = await getBanners().catch(() => []);
-  return <BannerCarousel banners={banners} />;
+  const [banners, promotion] = await Promise.all([getBanners().catch(() => []), getPromotion().catch(() => null)]);
+  return <BannerCarousel banners={banners} promotion={promotion} />;
 }
 
 function BannersSkeleton() {
@@ -208,6 +208,8 @@ async function SaleStrip() {
   if (total === 0) return null;
 
   const best = Math.max(...items.map((p) => discountPercent(p.price, p.compareAtPrice) ?? 0));
+  // During a store-wide offer every piece has the same % off
+  const storewide = items.every((p) => p.onPromotion);
   const image = items.find((p) => p.images[0])?.images[0];
 
   return (
@@ -216,10 +218,18 @@ async function SaleStrip() {
         <div className="flex flex-col items-start justify-center p-6 md:p-12">
           <p className="eyebrow text-canvas/75">On sale now</p>
           <h2 id="sale-title" className="display mt-2 text-[2rem] md:mt-3 md:text-5xl">
-            Up to <em className="italic">{best}% off</em>
+            {storewide ? (
+              <>
+                <em className="italic">{best}% off</em> everything
+              </>
+            ) : (
+              <>
+                Up to <em className="italic">{best}% off</em>
+              </>
+            )}
           </h2>
           <p className="mt-3 text-sm text-canvas/85">
-            {total} {total === 1 ? "piece" : "pieces"} marked down, while stocks last.
+            {storewide ? "Every saree, lehenga and kurta set, for a limited time." : `${total} ${total === 1 ? "piece" : "pieces"} marked down, while stocks last.`}
           </p>
           <span className="eyebrow mt-6 inline-flex items-center gap-3 border border-canvas/60 px-5 py-3 transition-colors group-hover:bg-canvas group-hover:text-ink">
             Shop the sale

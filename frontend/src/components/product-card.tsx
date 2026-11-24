@@ -48,7 +48,12 @@ export function ProductCard({
           {product.isNewArrival && (
             <span className="eyebrow bg-canvas px-2 py-1 text-[0.58rem] text-ink">New</span>
           )}
-          {off && <span className="eyebrow bg-clay px-2 py-1 text-[0.58rem] text-canvas">−{off}%</span>}
+          {off &&
+            (product.onPromotion ? (
+              <span className="eyebrow bg-night px-2 py-1 text-[0.58rem] text-gold">−{off}%</span>
+            ) : (
+              <span className="eyebrow bg-clay px-2 py-1 text-[0.58rem] text-canvas">−{off}%</span>
+            ))}
         </div>
 
         <WishlistButton

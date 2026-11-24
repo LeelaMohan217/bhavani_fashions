@@ -2,6 +2,7 @@ import type { Prisma } from "../../generated/prisma/client.js";
 import { prisma } from "../lib/prisma.js";
 import { HttpError, notFound } from "../lib/http-error.js";
 import { STORE } from "../config/store.js";
+import { getActivePromotion, withPromotion, type ActivePromotion } from "./promotions.js";
 
 const cartInclude = {
   items: {
@@ -28,10 +29,10 @@ const cartInclude = {
 type CartRow = Prisma.CartGetPayload<{ include: typeof cartInclude }>;
 
 /** Shapes a cart for the storefront, always using live prices and stock. */
-export function toCartDto(cart: CartRow) {
+export function toCartDto(cart: CartRow, promo: ActivePromotion | null) {
   const items = cart.items.map((item) => {
     const { variant } = item;
-    const { product } = variant;
+    const product = { ...variant.product, ...withPromotion(variant.product, promo) };
     const available = product.isActive ? variant.stock : 0;
     return {
       id: item.id,
@@ -67,13 +68,13 @@ export type CartDto = ReturnType<typeof toCartDto>;
 
 export async function createCart() {
   const cart = await prisma.cart.create({ data: {}, include: cartInclude });
-  return toCartDto(cart);
+  return toCartDto(cart, await getActivePromotion());
 }
 
 export async function getCart(cartId: string) {
   const cart = await prisma.cart.findUnique({ where: { id: cartId }, include: cartInclude });
   if (!cart) throw notFound("Cart");
-  return toCartDto(cart);
+  return toCartDto(cart, await getActivePromotion());
 }
 
 async function assertCart(cartId: string) {

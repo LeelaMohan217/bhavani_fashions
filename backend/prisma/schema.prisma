@@ -254,3 +254,17 @@ model Banner {
 
   @@index([isActive, sortOrder])
 }
+
+/// A store-wide percentage-off promotion (e.g. Black Friday). Applied to every live product's
+/// price while it is switched on and inside its dates; nothing is written to product prices.
+model Promotion {
+  id         String    @id @default(cuid())
+  /// Shown to shoppers, e.g. "Black Friday"
+  name       String
+  percentOff Int
+  startsAt   DateTime?
+  endsAt     DateTime
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}

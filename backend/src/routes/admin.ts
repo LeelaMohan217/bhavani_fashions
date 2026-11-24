@@ -32,6 +32,7 @@ import {
   setBannerActive,
   updateBanner,
 } from "../services/banners.js";
+import { PromotionInput, getLatestPromotion, savePromotion } from "../services/promotions.js";
 
 export const adminRouter = Router();
 
@@ -110,6 +111,14 @@ adminRouter.patch("/banners/:id/status", async (req, res) => {
 adminRouter.delete("/banners/:id", async (req, res) => {
   await deleteBanner(req.params.id);
   res.status(204).end();
+});
+
+// Store-wide promotion (Black Friday etc.)
+adminRouter.get("/promotion", async (_req, res) => {
+  res.json(await getLatestPromotion());
+});
+adminRouter.put("/promotion", async (req, res) => {
+  res.json(await savePromotion(PromotionInput.parse(req.body)));
 });
 
 // Orders

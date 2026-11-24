@@ -21,6 +21,12 @@ export const HERO = {
   featured: { name: "Meera Banarasi Organza", href: "/products/meera-banarasi-organza-saree" },
 };
 
+/** Photo for the store-wide promotion banner (Black Friday) */
+export const PROMO_IMAGE = {
+  src: unsplash("1759906760638-eeffcb471e53"),
+  alt: "Bride in a red embroidered lehenga",
+};
+
 export const STORY = {
   image: unsplash("1679006831648-7c9ea12e5807"),
   imageAlt: "Woman in a forest-green handloom saree",

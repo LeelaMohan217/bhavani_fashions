@@ -26,6 +26,8 @@ export type ProductCard = {
   images: ProductImage[];
   colors: { name: string; hex: string }[];
   inStock: boolean;
+  /** Priced with the store-wide promotion (e.g. Black Friday) */
+  onPromotion?: boolean;
 };
 
 export type ProductVariant = {
@@ -52,7 +54,11 @@ export type ProductDetail = {
   images: ProductImage[];
   variants: ProductVariant[];
   related: ProductCard[];
+  onPromotion?: boolean;
 };
+
+/** Store-wide % off running now (e.g. Black Friday) */
+export type Promotion = { name: string; percentOff: number; endsAt: string };
 
 export type ProductList = {
   items: ProductCard[];

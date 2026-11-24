@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import type { Banner } from "@/lib/types";
+import type { Banner, Promotion } from "@/lib/types";
 
 /**
  * One home-page offer banner. Phones: tall photo, copy at the bottom. Desktop: wide photo,
@@ -12,6 +12,7 @@ export function BannerSlide({
   priority = false,
   layout = "responsive",
   preview = false,
+  promo = null,
 }: {
   banner: Pick<Banner, "eyebrow" | "title" | "highlight" | "subtitle" | "ctaLabel" | "ctaHref" | "imageUrl" | "imageAlt">;
   priority?: boolean;
@@ -19,6 +20,8 @@ export function BannerSlide({
   layout?: "responsive" | "phone" | "desktop";
   /** Admin preview: no navigation, plain <img> so any pasted URL shows */
   preview?: boolean;
+  /** While a store-wide offer runs, the small label announces it in gold */
+  promo?: Promotion | null;
 }) {
   const phone = layout === "phone";
   const desk = layout === "desktop";
@@ -63,7 +66,13 @@ export function BannerSlide({
         ))}
       <div className={`absolute inset-0 ${shade}`} aria-hidden />
       <div className={`absolute text-canvas ${copy}`}>
-        {banner.eyebrow && <p className="eyebrow text-canvas/80">{banner.eyebrow}</p>}
+        {promo ? (
+          <p className="eyebrow text-gold">
+            {promo.name} · {promo.percentOff}% off
+          </p>
+        ) : (
+          banner.eyebrow && <p className="eyebrow text-canvas/80">{banner.eyebrow}</p>
+        )}
         <h2 className={`display mt-3 text-balance ${titleSize}`}>
           {banner.title || "Your headline"}
           {banner.highlight && <> <em className="italic">{banner.highlight}</em></>}

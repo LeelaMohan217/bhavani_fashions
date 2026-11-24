@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { updateTag } from "next/cache";
 import type { ActionResult, OrderStatus } from "../types";
 import { ADMIN_COOKIE, API_URL, AdminApiError, adminFetch } from "./api";
-import type { AdminBanner, AdminOrder, AdminProduct, BannerPayload, ProductPayload } from "./types";
+import type { AdminBanner, AdminOrder, AdminProduct, AdminPromotion, BannerPayload, ProductPayload, PromotionPayload } from "./types";
 
 function fail(e: unknown): { ok: false; error: string; fieldErrors?: Record<string, string> } {
   // redirect() works by throwing — let it through
@@ -159,6 +159,20 @@ export async function reorderBanners(ids: string[]): Promise<ActionResult<{ bann
     const banners = await adminFetch<AdminBanner[]>("/banners/order", { method: "PUT", body: { ids } });
     updateTag("banners");
     return { ok: true, banners };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+// ─── Store-wide offer (Black Friday etc.) ────────────────────────────────────
+
+export async function savePromotion(payload: PromotionPayload): Promise<ActionResult<{ promotion: AdminPromotion }>> {
+  try {
+    const promotion = await adminFetch<AdminPromotion>("/promotion", { method: "PUT", body: payload });
+    // Prices on every product list and page change with the offer
+    updateTag("promotion");
+    updateTag("catalogue");
+    return { ok: true, promotion };
   } catch (e) {
     return fail(e);
   }
