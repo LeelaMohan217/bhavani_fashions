@@ -445,13 +445,13 @@ function MoreSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
     <div className={`md:hidden ${open ? "" : "pointer-events-none"}`} aria-hidden={!open}>
       <div
         onClick={onClose}
-        className={`fixed inset-0 z-30 bg-neutral-900/30 transition-opacity duration-200 ${open ? "opacity-100" : "opacity-0"}`}
+        className={`fixed inset-0 z-30 bg-neutral-900/30 transition-[opacity,visibility] duration-200 ${open ? "visible opacity-100" : "invisible opacity-0"}`}
       />
       <div
         role="dialog"
         aria-label="More"
-        className={`fixed inset-x-0 bottom-[var(--bottom-nav-h)] z-30 rounded-t-2xl border-t border-neutral-200 bg-white px-3 pb-3 pt-2 shadow-[0_-8px_24px_-12px_rgb(0_0_0/0.15)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-          open ? "translate-y-0" : "translate-y-[calc(100%+var(--bottom-nav-h))]"
+        className={`fixed inset-x-0 bottom-[var(--bottom-nav-h)] z-30 rounded-t-2xl border-t border-neutral-200 bg-white px-3 pb-3 pt-2 shadow-[0_-8px_24px_-12px_rgb(0_0_0/0.15)] transition-[transform,visibility] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          open ? "visible translate-y-0" : "invisible translate-y-[calc(100%+var(--bottom-nav-h))]"
         }`}
       >
         <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-neutral-200" />
