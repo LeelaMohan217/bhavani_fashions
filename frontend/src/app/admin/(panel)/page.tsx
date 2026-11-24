@@ -37,7 +37,7 @@ async function DashboardContent() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <Stat icon={ShoppingBag} label="Orders today" value={d.today.orders} />
         <Stat icon={IndianRupee} label="Revenue today" value={d.today.revenue} format="inr" />
         <Stat
@@ -204,22 +204,22 @@ function Stat({
 }) {
   const body = (
     <>
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-neutral-500">{label}</span>
+      <div className="flex items-start justify-between gap-2">
+        <span className="min-w-0 text-xs leading-snug text-neutral-500 sm:text-sm">{label}</span>
         <span
-          className={`flex size-8 items-center justify-center rounded-md ${
+          className={`flex size-8 shrink-0 items-center justify-center rounded-md ${
             tone === "amber" ? "bg-amber-50 text-amber-700" : tone === "red" ? "bg-red-50 text-red-600" : "bg-neutral-100 text-neutral-600"
           }`}
         >
           <Icon className="size-4" />
         </span>
       </div>
-      <p className="mt-3 text-2xl font-semibold tracking-tight">
+      <p className="mt-3 text-xl font-semibold tracking-tight sm:text-2xl">
         <CountUp value={value} format={format} />
       </p>
     </>
   );
-  const cls = "block rounded-lg border border-neutral-200 bg-white p-5 shadow-xs";
+  const cls = "block rounded-lg border border-neutral-200 bg-white p-4 shadow-xs sm:p-5";
   return href ? (
     <Link data-rise href={href} className={`${cls} transition-colors hover:border-neutral-300`}>
       {body}
@@ -249,9 +249,9 @@ function DashboardSkeleton() {
   return (
     <div className="space-y-6" aria-busy aria-label="Loading dashboard">
       {/* KPI tiles */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="rounded-lg border border-neutral-200 bg-white p-5 shadow-xs">
+          <div key={i} className="rounded-lg border border-neutral-200 bg-white p-4 shadow-xs sm:p-5">
             <div className="flex items-center justify-between">
               <Bar className="h-4 w-24" />
               <Bar className="size-8 rounded-md" />
