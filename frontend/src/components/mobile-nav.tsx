@@ -57,13 +57,13 @@ export function MobileNav() {
                 </button>
               </div>
 
-              <ul className="mt-6 border-t border-line">
+              <ul className="mt-6">
                 {NAV_LINKS.map((l) => (
                   <li key={l.href}>
                     <Link
                       href={l.href}
                       onClick={close}
-                      className="group flex items-center justify-between border-b border-line py-4 text-base font-medium text-ink"
+                      className="group flex items-center justify-between py-3.5 text-base font-medium text-ink"
                     >
                       {l.label}
                       <ChevronRight className="size-4 text-stone transition-colors group-hover:text-clay" strokeWidth={1.5} />
