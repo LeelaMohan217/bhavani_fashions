@@ -4,7 +4,18 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { getCategories, getCategory, getProducts } from "@/lib/api";
 import type { SortOption } from "@/lib/types";
 import { ProductCard } from "./product-card";
-import { PRICE_RANGES } from "@/lib/content";
+import { OCCASIONS, PRICE_RANGES } from "@/lib/content";
+
+const OCCASION_COPY: Record<(typeof OCCASIONS)[number], string> = {
+  Wedding: "for the wedding",
+  Festive: "for festivals and celebrations",
+  Party: "for parties",
+  Birthday: "for birthdays",
+  Sangeet: "for the sangeet",
+  Haldi: "for the haldi",
+  Everyday: "for everyday wear",
+  Work: "for work",
+};
 
 const formatRupees = (r: number) => `₹${r.toLocaleString("en-IN")}`;
 import { SortSelect } from "./sort-select";
@@ -32,6 +43,9 @@ export async function ProductListing({
   const filter = first(sp.filter);
   const onlyNew = filter === "new";
   const onlySale = filter === "sale";
+  // Shop by occasion: ?occasion=Wedding (only known occasions)
+  const occasionParam = first(sp.occasion)?.toLowerCase();
+  const occasion = OCCASIONS.find((o) => o.toLowerCase() === occasionParam);
   // Shop by price: ?min=3000&max=5000 in rupees (max exclusive)
   const rupees = (v: string | undefined) => (v && /^\d{1,7}$/.test(v) ? Number(v) : undefined);
   const min = rupees(first(sp.min));
@@ -49,6 +63,7 @@ export async function ProductListing({
       category: categorySlug,
       isNew: onlyNew || undefined,
       sale: onlySale || undefined,
+      occasion,
       minPrice: min === undefined ? undefined : min * 100,
       maxPrice: max === undefined ? undefined : max * 100 - 1,
       sort,
@@ -63,6 +78,7 @@ export async function ProductListing({
     const params = new URLSearchParams();
     if (onlyNew) params.set("filter", "new");
     if (onlySale) params.set("filter", "sale");
+    if (occasion) params.set("occasion", occasion);
     if (min !== undefined) params.set("min", String(min));
     if (max !== undefined) params.set("max", String(max));
     if (sort !== "featured") params.set("sort", sort);
@@ -74,8 +90,9 @@ export async function ProductListing({
   // A page past the end (old link, edited URL) goes to the last real page.
   if (page > list.totalPages) redirect(pageHref(list.totalPages));
 
-  const title = priceLabel ?? category?.name ?? (onlyNew ? "New arrivals" : onlySale ? "On sale" : "All pieces");
+  const title = occasion ?? priceLabel ?? category?.name ?? (onlyNew ? "New arrivals" : onlySale ? "On sale" : "All pieces");
   const intro =
+    (occasion ? `Sarees, lehengas and kurta sets ${OCCASION_COPY[occasion]}.` : null) ??
     (priceLabel ? "Sarees, lehengas and kurta sets in this price range." : null) ??
     category?.description ??
     (onlyNew
@@ -122,7 +139,7 @@ export async function ProductListing({
             total={list.total}
           />
           <ul className="-mx-1 hidden gap-1 overflow-x-auto [scrollbar-width:none] md:flex">
-            <FilterChip href="/shop" active={!categorySlug && !onlyNew && !onlySale && !priceLabel}>All</FilterChip>
+            <FilterChip href="/shop" active={!categorySlug && !onlyNew && !onlySale && !priceLabel && !occasion}>All</FilterChip>
             {categories.map((c) => (
               <FilterChip key={c.slug} href={`/shop/${c.slug}`} active={c.slug === categorySlug}>
                 {c.name}

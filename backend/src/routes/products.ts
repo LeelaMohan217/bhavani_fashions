@@ -21,6 +21,7 @@ const ListQuery = z.object({
   sale: boolParam,
   color: z.string().optional(),
   fabric: z.string().optional(),
+  occasion: z.string().trim().max(40).optional(),
   minPrice: z.coerce.number().int().nonnegative().optional(),
   maxPrice: z.coerce.number().int().nonnegative().optional(),
   sort: z.enum(["newest", "price-asc", "price-desc", "featured"]).default("featured"),
@@ -86,6 +87,7 @@ productsRouter.get("/", async (req, res) => {
     // During a store-wide promotion every piece is on sale
     ...(q.sale && !promo && { compareAtPrice: { gt: prisma.product.fields.price } }),
     ...(q.fabric && { fabric: { equals: q.fabric, mode: "insensitive" } }),
+    ...(q.occasion && { occasion: { equals: q.occasion, mode: "insensitive" } }),
     ...(q.color && { variants: { some: { color: { equals: q.color, mode: "insensitive" } } } }),
     // Price bounds are what shoppers see, so during a promotion they're converted back to list prices
     ...((q.minPrice !== undefined || q.maxPrice !== undefined) && {

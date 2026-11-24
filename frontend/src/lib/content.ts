@@ -12,6 +12,9 @@ export const NAV_LINKS = [
   { label: "Sale", href: "/shop?filter=sale" },
 ] as const;
 
+/** "Shop by occasion" (matches each product's Occasion in Admin). Links go to /shop?occasion=… */
+export const OCCASIONS = ["Wedding", "Festive", "Party", "Birthday", "Sangeet", "Haldi", "Everyday", "Work"] as const;
+
 /** Price bands for "Shop by price" (rupees; `max` is exclusive). Links go to /shop?min=…&max=… */
 export const PRICE_RANGES = [
   { label: "Under ₹3,000", max: 3000 },

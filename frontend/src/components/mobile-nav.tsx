@@ -4,17 +4,17 @@ import { useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { ArrowRight, Menu, Minus, Package, Plus, X } from "lucide-react";
-import { NAV_LINKS, PRICE_RANGES, priceHref } from "@/lib/content";
+import { NAV_LINKS, OCCASIONS, PRICE_RANGES, priceHref } from "@/lib/content";
 import { useRecentOrder } from "@/lib/recent-order";
 import { Logo } from "./logo";
 
-type Section = "category" | "price";
+type Section = "occasion" | "price";
 
-/** Phone/tablet menu: full screen, with Shop by category and Shop by price as an accordion. */
+/** Phone/tablet menu: full screen. Category links, then Shop by occasion and Shop by price as an accordion. */
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   // One section open at a time; opening one closes the other
-  const [section, setSection] = useState<Section | null>("category");
+  const [section, setSection] = useState<Section | null>(null);
   const close = () => setOpen(false);
   const recentOrder = useRecentOrder();
 
@@ -34,6 +34,7 @@ export function MobileNav() {
   const toggle = (s: Section) => setSection((cur) => (cur === s ? null : s));
 
   const categories = [{ label: "All products", href: "/shop" }, ...NAV_LINKS];
+  const occasions = OCCASIONS.map((o) => ({ label: o, href: `/shop?occasion=${o}` }));
   const prices = PRICE_RANGES.map((r) => ({ label: r.label, href: priceHref(r) }));
 
   return (
@@ -68,8 +69,18 @@ export function MobileNav() {
             </div>
 
             <nav aria-label="Mobile" className="container-x flex min-h-0 flex-1 flex-col overflow-y-auto pb-8">
-              <div className="divide-y divide-line border-b border-line">
-                <Accordion title="Shop by category" open={section === "category"} onToggle={() => toggle("category")} links={categories} onNavigate={close} />
+              <ul className="py-3">
+                {categories.map((l) => (
+                  <li key={l.href}>
+                    <Link href={l.href} onClick={close} className="block py-3 text-base font-medium text-ink">
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="divide-y divide-line border-y border-line">
+                <Accordion title="Shop by occasion" open={section === "occasion"} onToggle={() => toggle("occasion")} links={occasions} onNavigate={close} />
                 <Accordion title="Shop by price" open={section === "price"} onToggle={() => toggle("price")} links={prices} onNavigate={close} />
               </div>
 

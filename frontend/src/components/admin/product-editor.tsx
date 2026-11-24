@@ -14,7 +14,7 @@ const IMAGE_HOSTS = ["images.unsplash.com", "res.cloudinary.com"];
 const SIZE_RUN = ["XS", "S", "M", "L", "XL"];
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 const FABRICS = ["Silk", "Cotton", "Organza", "Georgette", "Chanderi", "Linen", "Crepe", "Velvet", "Tussar Silk"];
-const OCCASIONS = ["Wedding", "Festive", "Party", "Everyday", "Work", "Sangeet", "Haldi", "Ceremony"];
+const OCCASIONS = ["Wedding", "Festive", "Party", "Birthday", "Everyday", "Work", "Sangeet", "Haldi", "Ceremony"];
 
 type VariantRow = { key: string; id?: string; sku: string; color: string; colorHex: string; size: string; stock: string };
 type ImageRow = { key: string; url: string; alt: string };
