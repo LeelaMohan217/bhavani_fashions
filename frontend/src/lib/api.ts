@@ -43,6 +43,9 @@ export type ProductQuery = {
   isNew?: boolean;
   /** Only marked-down products */
   sale?: boolean;
+  /** Shopper-facing price bounds in paise (inclusive) */
+  minPrice?: number;
+  maxPrice?: number;
   sort?: SortOption;
   page?: number;
   pageSize?: number;
@@ -59,6 +62,8 @@ export async function getProducts(query: ProductQuery = {}): Promise<ProductList
   if (query.featured !== undefined) params.set("featured", String(query.featured));
   if (query.isNew !== undefined) params.set("new", String(query.isNew));
   if (query.sale) params.set("sale", "true");
+  if (query.minPrice !== undefined) params.set("minPrice", String(query.minPrice));
+  if (query.maxPrice !== undefined) params.set("maxPrice", String(query.maxPrice));
   if (query.sort) params.set("sort", query.sort);
   if (query.page) params.set("page", String(query.page));
   if (query.pageSize) params.set("pageSize", String(query.pageSize));

@@ -4,6 +4,9 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { getCategories, getCategory, getProducts } from "@/lib/api";
 import type { SortOption } from "@/lib/types";
 import { ProductCard } from "./product-card";
+import { PRICE_RANGES } from "@/lib/content";
+
+const formatRupees = (r: number) => `₹${r.toLocaleString("en-IN")}`;
 import { SortSelect } from "./sort-select";
 import { FilterSheet } from "./filter-sheet";
 import { ProductGridSkeleton } from "./skeletons";
@@ -29,11 +32,29 @@ export async function ProductListing({
   const filter = first(sp.filter);
   const onlyNew = filter === "new";
   const onlySale = filter === "sale";
+  // Shop by price: ?min=3000&max=5000 in rupees (max exclusive)
+  const rupees = (v: string | undefined) => (v && /^\d{1,7}$/.test(v) ? Number(v) : undefined);
+  const min = rupees(first(sp.min));
+  const max = rupees(first(sp.max));
+  const priceLabel =
+    min === undefined && max === undefined
+      ? null
+      : (PRICE_RANGES.find((r) => r.min === min && r.max === max)?.label ??
+        (max === undefined ? `${formatRupees(min!)} & above` : min === undefined ? `Under ${formatRupees(max)}` : `${formatRupees(min)} – ${formatRupees(max)}`));
 
   const [category, categories, list] = await Promise.all([
     categorySlug ? getCategory(categorySlug) : Promise.resolve(null),
     getCategories(),
-    getProducts({ category: categorySlug, isNew: onlyNew || undefined, sale: onlySale || undefined, sort, page, pageSize: 12 }),
+    getProducts({
+      category: categorySlug,
+      isNew: onlyNew || undefined,
+      sale: onlySale || undefined,
+      minPrice: min === undefined ? undefined : min * 100,
+      maxPrice: max === undefined ? undefined : max * 100 - 1,
+      sort,
+      page,
+      pageSize: 12,
+    }),
   ]);
 
   if (categorySlug && !category) notFound();
@@ -42,6 +63,8 @@ export async function ProductListing({
     const params = new URLSearchParams();
     if (onlyNew) params.set("filter", "new");
     if (onlySale) params.set("filter", "sale");
+    if (min !== undefined) params.set("min", String(min));
+    if (max !== undefined) params.set("max", String(max));
     if (sort !== "featured") params.set("sort", sort);
     if (p > 1) params.set("page", String(p));
     const qs = params.toString();
@@ -51,8 +74,9 @@ export async function ProductListing({
   // A page past the end (old link, edited URL) goes to the last real page.
   if (page > list.totalPages) redirect(pageHref(list.totalPages));
 
-  const title = category?.name ?? (onlyNew ? "New arrivals" : onlySale ? "On sale" : "All pieces");
+  const title = priceLabel ?? category?.name ?? (onlyNew ? "New arrivals" : onlySale ? "On sale" : "All pieces");
   const intro =
+    (priceLabel ? "Sarees, lehengas and kurta sets in this price range." : null) ??
     category?.description ??
     (onlyNew
       ? "The latest weaves and silhouettes, fresh from our artisans."
@@ -98,7 +122,7 @@ export async function ProductListing({
             total={list.total}
           />
           <ul className="-mx-1 hidden gap-1 overflow-x-auto [scrollbar-width:none] md:flex">
-            <FilterChip href="/shop" active={!categorySlug && !onlyNew && !onlySale}>All</FilterChip>
+            <FilterChip href="/shop" active={!categorySlug && !onlyNew && !onlySale && !priceLabel}>All</FilterChip>
             {categories.map((c) => (
               <FilterChip key={c.slug} href={`/shop/${c.slug}`} active={c.slug === categorySlug}>
                 {c.name}

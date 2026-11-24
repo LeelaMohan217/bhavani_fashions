@@ -87,8 +87,12 @@ productsRouter.get("/", async (req, res) => {
     ...(q.sale && !promo && { compareAtPrice: { gt: prisma.product.fields.price } }),
     ...(q.fabric && { fabric: { equals: q.fabric, mode: "insensitive" } }),
     ...(q.color && { variants: { some: { color: { equals: q.color, mode: "insensitive" } } } }),
+    // Price bounds are what shoppers see, so during a promotion they're converted back to list prices
     ...((q.minPrice !== undefined || q.maxPrice !== undefined) && {
-      price: { gte: q.minPrice, lte: q.maxPrice },
+      price: {
+        gte: q.minPrice === undefined ? undefined : promo ? Math.ceil((q.minPrice * 100) / (100 - promo.percentOff)) : q.minPrice,
+        lte: q.maxPrice === undefined ? undefined : promo ? Math.floor((q.maxPrice * 100) / (100 - promo.percentOff)) : q.maxPrice,
+      },
     }),
   };
 
