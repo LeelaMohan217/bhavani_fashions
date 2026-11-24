@@ -3,7 +3,7 @@ import { BagButton } from "./cart/bag-button";
 import { NAV_LINKS } from "@/lib/content";
 import { Logo } from "./logo";
 import { MobileNav } from "./mobile-nav";
-import { SearchButton } from "./search-overlay";
+import { SearchBar, SearchButton } from "./search-overlay";
 import { WishlistLink } from "./wishlist-button";
 
 // Display is set per element (inline-flex vs hidden md:inline-flex) so the classes never conflict
@@ -31,10 +31,14 @@ export function SiteHeader() {
         <Logo />
 
         <div className="flex items-center justify-end gap-0.5 md:gap-1">
-          <SearchButton className={`${iconButton} inline-flex`} />
+          {/* Phones search from the bar below; larger screens use this icon */}
+          <SearchButton className={`${iconButton} hidden md:inline-flex`} />
           <WishlistLink className={`${iconButton} hidden md:inline-flex`} />
           <BagButton className={iconButton} />
         </div>
+      </div>
+      <div className="container-x pb-3 md:hidden">
+        <SearchBar />
       </div>
     </header>
   );
