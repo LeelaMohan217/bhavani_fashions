@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Banner, Promotion } from "@/lib/types";
 import { BannerSlide } from "./banner-slide";
-import { PromoSlide } from "@/components/promo/promo-slide";
 import { useCountdown } from "@/components/promo/countdown";
 
 const INTERVAL_MS = 6000;
@@ -15,11 +14,10 @@ export function BannerCarousel({ banners, promotion }: { banners: Banner[]; prom
   const [current, setCurrent] = useState(0);
   // Paused while the shopper hovers, focuses or touches the banners
   const [paused, setPaused] = useState(false);
-  // A running store-wide offer gets its own first slide; it drops out the second the offer ends
+  // While a store-wide offer runs, each banner carries its label; it drops off the second the offer ends
   const t = useCountdown(promotion?.endsAt ?? "1970-01-01T00:00:00Z");
   const promo = promotion && !t?.ended ? promotion : null;
   const slides = [
-    ...(promo ? [{ key: "promotion", node: (first: boolean) => <PromoSlide promo={promo} priority={first} /> }] : []),
     ...banners.map((b) => ({ key: b.id, node: (first: boolean) => <BannerSlide banner={b} priority={first} promo={promo} /> })),
   ];
   const count = slides.length;

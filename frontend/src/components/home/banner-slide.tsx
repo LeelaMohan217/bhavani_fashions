@@ -67,7 +67,7 @@ export function BannerSlide({
       <div className={`absolute inset-0 ${shade}`} aria-hidden />
       <div className={`absolute text-canvas ${copy}`}>
         {promo ? (
-          <p className="eyebrow text-gold">
+          <p className="eyebrow inline-block bg-canvas px-2.5 py-1.5 text-ink">
             {promo.name} · {promo.percentOff}% off
           </p>
         ) : (
