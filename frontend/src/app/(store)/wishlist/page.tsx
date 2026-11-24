@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Wishlist", robots: { index: false } 
 
 export default function WishlistPage() {
   return (
-    <div className="container-x pb-10 pt-10 md:pt-16">
+    <div className="container-x pb-24 pt-10 md:pb-32 md:pt-16">
       <nav aria-label="Breadcrumb" className="eyebrow flex items-center gap-2 text-stone">
         <Link href="/" className="hover:text-ink">Home</Link>
         <span aria-hidden>/</span>

@@ -122,7 +122,7 @@ async function Product({ params }: Pick<PageProps<"/products/[slug]">, "params">
       </div>
 
       {product.related.length > 0 && (
-        <section className="container-x mt-28 md:mt-40" aria-labelledby="related-title">
+        <section className="container-x mt-28 pb-24 md:mt-40 md:pb-32" aria-labelledby="related-title">
           <div className="border-b border-line pb-6">
             <p className="eyebrow text-clay">You may also love</p>
             <h2 id="related-title" className="display mt-3 text-[2.5rem] md:text-5xl">

@@ -94,7 +94,7 @@ export async function ProductListing({
         </div>
       </div>
 
-      <section className="container-x pb-10 pt-10 md:pt-12">
+      <section className="container-x pb-24 pt-10 md:pb-32 md:pt-12">
         <p className="eyebrow mb-8 text-stone">
           {list.total} {list.total === 1 ? "piece" : "pieces"}
         </p>
