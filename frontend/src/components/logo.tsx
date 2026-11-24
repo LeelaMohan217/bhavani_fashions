@@ -1,11 +1,11 @@
 import Link from "next/link";
 
-export function Logo({ tone = "ink" }: { tone?: "ink" | "canvas" }) {
+export function Logo({ tone = "ink", align = "center" }: { tone?: "ink" | "canvas"; align?: "center" | "start" }) {
   return (
     <Link
       href="/"
       aria-label="Bhavani Fashion home"
-      className={`group inline-flex flex-col items-center leading-none ${
+      className={`group inline-flex flex-col leading-none ${align === "start" ? "items-start" : "items-center"} ${
         tone === "canvas" ? "text-canvas" : "text-ink"
       }`}
     >

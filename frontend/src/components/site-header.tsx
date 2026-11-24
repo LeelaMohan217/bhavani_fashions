@@ -12,9 +12,13 @@ const iconButton = "size-10 items-center justify-center rounded-full text-ink tr
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-line/80 bg-canvas">
-      <div className="container-x grid h-[4.5rem] grid-cols-[1fr_auto_1fr] items-center md:h-20">
-        <div className="flex items-center">
+      {/* Phones: menu and logo on the left, wishlist and bag on the right. md+: logo centred. */}
+      <div className="container-x flex h-[4.5rem] items-center md:grid md:h-20 md:grid-cols-[1fr_auto_1fr]">
+        <div className="flex items-center gap-1">
           <MobileNav />
+          <div className="md:hidden">
+            <Logo align="start" />
+          </div>
           <nav aria-label="Main" className="hidden lg:block">
             <ul className="flex items-center gap-8">
               {NAV_LINKS.map((l) => (
@@ -28,12 +32,14 @@ export function SiteHeader() {
           </nav>
         </div>
 
-        <Logo />
+        <div className="hidden md:block">
+          <Logo />
+        </div>
 
-        <div className="flex items-center justify-end gap-0.5 md:gap-1">
+        <div className="ml-auto flex items-center justify-end gap-0.5 md:gap-1">
           {/* Phones search from the bar below; larger screens use this icon */}
           <SearchButton className={`${iconButton} hidden md:inline-flex`} />
-          <WishlistLink className={`${iconButton} hidden md:inline-flex`} />
+          <WishlistLink className={`${iconButton} inline-flex`} />
           <BagButton className={iconButton} />
         </div>
       </div>
