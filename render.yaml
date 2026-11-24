@@ -1,0 +1,25 @@
+# Render Blueprint for the Bhavani Fashion API (Express + Prisma).
+# Render → New → Blueprint → pick this repo. Secrets marked `sync: false` are entered in the dashboard.
+services:
+  - type: web
+    name: bhavani-fashion-api
+    runtime: node
+    rootDir: backend
+    plan: free
+    region: singapore
+    buildCommand: npm ci --include=dev && npm run build && npm run db:deploy
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATABASE_URL # Neon connection string (with ?sslmode=require)
+        sync: false
+      - key: CORS_ORIGINS # your Vercel URL, e.g. https://bhavani-fashions.vercel.app
+        sync: false
+      - key: RAZORPAY_KEY_ID # optional — leave empty for cash on delivery only
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false

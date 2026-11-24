@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CreditCard, ExternalLink, ImageIcon, Store, Truck, UserRound } from "lucide-react";
 import { getMe } from "@/lib/admin/api";
+import { connection } from "next/server";
 import { getCheckoutConfig } from "@/lib/api";
 import { SettingsSkeleton } from "@/components/admin/skeletons";
 import { formatPrice } from "@/lib/format";
@@ -30,6 +31,8 @@ export default function SettingsPage() {
 }
 
 async function SettingsContent() {
+  // Load at request time (not during the build) so deploys never depend on the API being up.
+  await connection();
   const [me, config] = await Promise.all([getMe(), getCheckoutConfig()]);
 
   return (

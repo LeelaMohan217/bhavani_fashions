@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, MessageCircle, RotateCcw, ShieldCheck, Truck } from "lucide-react";
+import { connection } from "next/server";
 import { getCategories, getProducts } from "@/lib/api";
 import { HERO, STORY } from "@/lib/content";
 import { ProductCard } from "@/components/product-card";
@@ -133,6 +134,8 @@ function Hero() {
 }
 
 async function Categories() {
+  // Load at request time (not during the build) so deploys never depend on the API being up.
+  await connection();
   const categories = await getCategories();
 
   return (
@@ -182,6 +185,7 @@ function CategoriesSkeleton() {
 }
 
 async function ProductRow({ query }: { query: Parameters<typeof getProducts>[0] }) {
+  await connection();
   const { items: all } = await getProducts(query);
   // Show complete rows of four on desktop so the editorial grid never ends ragged
   const items = all.length >= 4 ? all.slice(0, all.length - (all.length % 4)) : all;
