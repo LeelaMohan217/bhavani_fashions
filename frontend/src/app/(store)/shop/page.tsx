@@ -4,7 +4,7 @@ import { ProductListing, ProductListingSkeleton } from "@/components/product-lis
 
 export const metadata: Metadata = {
   title: "Shop all",
-  description: "Shop handpicked sarees, lehengas and kurta sets from Bhavani Fashion.",
+  description: "Shop handpicked sarees, lehengas and kurta sets from Kosha.",
 };
 
 export default function ShopPage({ searchParams }: PageProps<"/shop">) {

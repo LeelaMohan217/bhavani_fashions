@@ -28,5 +28,5 @@ export async function GET(request: Request) {
     ]),
   );
 
-  return csvResponse(`bhavani-products-${stamp()}.csv`, csv);
+  return csvResponse(`kosha-products-${stamp()}.csv`, csv);
 }

@@ -17,7 +17,7 @@ export const INFO_PAGES = {
   },
   "our-story": {
     title: "Our story",
-    eyebrow: "Bhavani",
+    eyebrow: "Kosha",
     intro: "Who we are and the weavers we work with.",
   },
   privacy: {
@@ -28,7 +28,7 @@ export const INFO_PAGES = {
   terms: {
     title: "Terms & conditions",
     eyebrow: "Legal",
-    intro: "The terms that apply when you shop with Bhavani Fashion.",
+    intro: "The terms that apply when you shop with Kosha.",
   },
 } as const;
 

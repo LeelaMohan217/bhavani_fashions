@@ -191,7 +191,7 @@ function Brand({ collapsed, animate }: { collapsed: boolean; animate: boolean })
     // On the collapsed desktop rail the "B" expand button stands in for the wordmark.
     <Link
       href="/admin"
-      aria-label="Bhavani admin home"
+      aria-label="Kosha admin home"
       tabIndex={collapsed ? -1 : undefined}
       // Fades rather than unmounting; waits a beat on expand so it appears once there's room.
       // Only animate when the user toggles — not when the saved state is applied on load
@@ -199,7 +199,7 @@ function Brand({ collapsed, animate }: { collapsed: boolean; animate: boolean })
         collapsed ? "lg:pointer-events-none lg:opacity-0" : "delay-100"
       }`}
     >
-      <span className="font-display text-xl tracking-tight">Bhavani</span>
+      <span className="font-display text-xl tracking-tight">Kosha</span>
       <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[0.65rem] font-medium uppercase tracking-wider text-neutral-500">
         Admin
       </span>
@@ -353,7 +353,7 @@ function NavRail({ toFulfil }: { toFulfil: number }) {
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-20 flex-col items-stretch border-r border-neutral-200 bg-white md:flex lg:hidden">
       <Link
         href="/admin"
-        aria-label="Bhavani admin home"
+        aria-label="Kosha admin home"
         className="mx-auto mt-3 flex size-10 items-center justify-center rounded-xl bg-neutral-900 font-display text-lg text-white"
       >
         B
@@ -458,7 +458,7 @@ function MoreSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
         <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-neutral-200" />
         <div className="flex items-center justify-between px-2 pb-2">
           <span className="flex items-baseline gap-2">
-            <span className="font-display text-lg tracking-tight">Bhavani</span>
+            <span className="font-display text-lg tracking-tight">Kosha</span>
             <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[0.6rem] font-medium uppercase tracking-wider text-neutral-500">
               Admin
             </span>
@@ -528,7 +528,7 @@ export function ShellSkeleton() {
       {/* Sidebar */}
       <div className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-neutral-200 bg-white lg:flex">
         <div className="flex h-14 items-center justify-between px-5">
-          <span className="font-display text-xl tracking-tight text-neutral-300">Bhavani</span>
+          <span className="font-display text-xl tracking-tight text-neutral-300">Kosha</span>
           <span className={`${bar} size-4`} />
         </div>
         <div className="flex-1 space-y-1 px-3 py-3">

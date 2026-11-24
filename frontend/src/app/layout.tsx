@@ -18,8 +18,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "Bhavani Fashion | Handpicked Sarees, Lehengas & Kurta Sets",
-    template: "%s | Bhavani Fashion",
+    default: "Kosha | Handpicked Sarees, Lehengas & Kurta Sets",
+    template: "%s | Kosha",
   },
   description:
     "Handwoven sarees, festive lehengas and everyday kurta sets, handpicked from India's finest weaving clusters. Free shipping across India.",

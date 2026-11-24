@@ -4,7 +4,7 @@ import { TrackOrderForm } from "@/components/track-order-form";
 
 export const metadata: Metadata = {
   title: "Track your order",
-  description: "Check the status of your Bhavani Fashion order with your order number and mobile number.",
+  description: "Check the status of your Kosha order with your order number and mobile number.",
 };
 
 export default function TrackOrderPage() {

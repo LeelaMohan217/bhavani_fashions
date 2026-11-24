@@ -152,7 +152,7 @@ export async function placeOrder(input: z.infer<typeof PlaceOrderSchema>) {
       orderId: rzp.id,
       amount: rzp.amount,
       currency: rzp.currency,
-      name: "Bhavani Fashion",
+      name: "Kosha",
       description: `Order ${formatOrderNumber(order.number)}`,
       prefill: { name: order.fullName, email: order.email, contact: order.phone },
     },

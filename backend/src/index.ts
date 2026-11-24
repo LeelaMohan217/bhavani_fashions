@@ -5,7 +5,7 @@ import { prisma } from "./lib/prisma.js";
 const app = createApp();
 
 const server = app.listen(env.PORT, () => {
-  console.log(`Bhavani Fashion API running on http://localhost:${env.PORT}`);
+  console.log(`Kosha API running on http://localhost:${env.PORT}`);
 });
 
 async function shutdown() {

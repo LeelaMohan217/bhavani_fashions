@@ -472,7 +472,7 @@ export function ProductEditor({ product, categories }: { product?: AdminProduct;
                 label="Live in store"
                 description={form.isActive ? "Customers can see and buy this piece." : "Hidden from customers. Past orders are unaffected."}
               />
-              <Switch checked={form.isFeatured} onChange={(v) => set("isFeatured", v)} label="Featured" description="Shown in “The Bhavani edit” on the home page." />
+              <Switch checked={form.isFeatured} onChange={(v) => set("isFeatured", v)} label="Featured" description="Shown in Bestsellers on the home page." />
               <Switch checked={form.isNewArrival} onChange={(v) => set("isNewArrival", v)} label="New arrival" description="Adds a “New” tag and lists it under New In." />
             </div>
           </Card>

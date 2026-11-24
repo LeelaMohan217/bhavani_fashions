@@ -58,7 +58,7 @@ export async function ProductListing({
       ? "The latest weaves and silhouettes, fresh from our artisans."
       : onlySale
         ? "Marked-down sarees, lehengas and kurta sets, while stocks last."
-        : "Every saree, lehenga and kurta set in the Bhavani collection.");
+        : "Every saree, lehenga and kurta set in the Kosha collection.");
 
   return (
     <>

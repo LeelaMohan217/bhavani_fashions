@@ -40,7 +40,7 @@ async function SettingsContent() {
       <Card title={<Title icon={Store}>Store</Title>}>
         <Rows
           rows={[
-            ["Store name", "Bhavani Fashion"],
+            ["Store name", "Kosha"],
             ["Currency", "Indian Rupee (₹)"],
             ["Prices", "Inclusive of all taxes"],
             ["Customer checkout", "Guest checkout (no account needed)"],

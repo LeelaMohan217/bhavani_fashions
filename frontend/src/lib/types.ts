@@ -1,4 +1,4 @@
-// Shapes returned by the Bhavani Fashion API (backend/src/routes).
+// Shapes returned by the Kosha API (backend/src/routes).
 // All prices are integers in paise.
 
 export type Category = {
