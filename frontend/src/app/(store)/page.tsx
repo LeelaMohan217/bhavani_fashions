@@ -60,7 +60,7 @@ async function Banners() {
 
 function BannersSkeleton() {
   return (
-    <div className="container-x pt-3 md:pt-6" aria-hidden>
+    <div className="pt-3 md:container-x md:pt-6" aria-hidden>
       <div className="aspect-[4/5] max-h-[82svh] w-full animate-pulse bg-sand md:aspect-[21/8] md:max-h-none" />
     </div>
   );
@@ -167,7 +167,7 @@ async function ProductRow({ query, scroll = false }: { query: Parameters<typeof 
 
   if (scroll) {
     return (
-      <ul className="-mx-5 mt-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-4 md:gap-x-6 md:gap-y-12 md:overflow-visible md:px-0 [&::-webkit-scrollbar]:hidden">
+      <ul className="-mx-5 mt-6 flex snap-x snap-mandatory scroll-px-5 gap-4 overflow-x-auto px-5 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-4 md:gap-x-6 md:gap-y-12 md:overflow-visible md:px-0 [&::-webkit-scrollbar]:hidden">
         {items.map((p) => (
           <li key={p.id} className="w-[44%] shrink-0 snap-start md:w-auto">
             <ProductCard product={p} />
