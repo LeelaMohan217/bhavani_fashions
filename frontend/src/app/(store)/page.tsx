@@ -212,12 +212,26 @@ async function SaleStrip() {
   const storewide = items.every((p) => p.onPromotion);
   const image = items.find((p) => p.images[0])?.images[0];
 
+  // Same shape as the home banners: full width on phones, photo with the text laid over it
   return (
-    <section className="container-x mt-14 md:mt-20" aria-labelledby="sale-title">
-      <Link href="/shop?filter=sale" className="group grid overflow-hidden bg-clay-deep text-canvas md:grid-cols-2">
-        <div className="flex flex-col items-start justify-center p-6 md:p-12">
-          <p className="eyebrow text-canvas/75">On sale now</p>
-          <h2 id="sale-title" className="display mt-2 text-[2rem] md:mt-3 md:text-5xl">
+    <section className="mt-14 md:container-x md:mt-20" aria-labelledby="sale-title">
+      <Link href="/shop?filter=sale" className="group relative block aspect-[4/5] max-h-[82svh] w-full overflow-hidden bg-clay-deep md:aspect-[21/8] md:max-h-none">
+        {image && (
+          <Image
+            src={image.url}
+            alt={image.alt}
+            fill
+            sizes="(min-width: 1280px) 1240px, 100vw"
+            className="object-cover object-top transition-transform duration-[1.2s] ease-[var(--ease-editorial)] group-hover:scale-[1.03]"
+          />
+        )}
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/30 to-transparent md:bg-gradient-to-r md:from-ink/75 md:via-ink/30"
+        />
+        <div className="absolute inset-x-0 bottom-0 px-6 pb-10 pt-7 text-canvas md:inset-y-0 md:right-auto md:flex md:w-1/2 md:flex-col md:items-start md:justify-center md:px-14">
+          <p className="eyebrow text-canvas/80">On sale now</p>
+          <h2 id="sale-title" className="display mt-3 text-[2.5rem] sm:text-5xl lg:text-6xl">
             {storewide ? (
               <>
                 <em className="italic">{best}% off</em> everything
@@ -228,25 +242,14 @@ async function SaleStrip() {
               </>
             )}
           </h2>
-          <p className="mt-3 text-sm text-canvas/85">
+          <p className="mt-3 max-w-md text-sm text-canvas/85 md:text-base">
             {storewide ? "Every saree, lehenga and kurta set, for a limited time." : `${total} ${total === 1 ? "piece" : "pieces"} marked down, while stocks last.`}
           </p>
-          <span className="eyebrow mt-6 inline-flex items-center gap-3 border border-canvas/60 px-5 py-3 transition-colors group-hover:bg-canvas group-hover:text-ink">
+          <span className="eyebrow mt-6 inline-flex items-center gap-3 bg-canvas px-6 py-4 text-ink transition-colors group-hover:bg-sand">
             Shop the sale
             <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" strokeWidth={1.5} />
           </span>
         </div>
-        {image && (
-          <div className="relative aspect-[16/10] md:aspect-auto md:min-h-80">
-            <Image
-              src={image.url}
-              alt={image.alt}
-              fill
-              sizes="(min-width: 768px) 50vw, 100vw"
-              className="object-cover transition-transform duration-[1.2s] ease-[var(--ease-editorial)] group-hover:scale-[1.03]"
-            />
-          </div>
-        )}
       </Link>
     </section>
   );
