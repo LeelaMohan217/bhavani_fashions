@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { ArrowUpRight, Menu, X } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Menu, X } from "lucide-react";
 import { NAV_LINKS } from "@/lib/content";
 
 export function MobileNav() {
@@ -57,18 +57,16 @@ export function MobileNav() {
                 </button>
               </div>
 
-              <ul className="mt-10 space-y-1">
-                {NAV_LINKS.map((l, i) => (
+              <ul className="mt-6 border-t border-line">
+                {NAV_LINKS.map((l) => (
                   <li key={l.href}>
                     <Link
                       href={l.href}
                       onClick={close}
-                      className="group flex items-baseline justify-between border-b border-line py-4"
+                      className="group flex items-center justify-between border-b border-line py-4 text-base font-medium text-ink"
                     >
-                      <span className="display text-[2.1rem]">{l.label}</span>
-                      <span className="eyebrow text-stone transition-colors group-hover:text-clay">
-                        0{i + 1}
-                      </span>
+                      {l.label}
+                      <ChevronRight className="size-4 text-stone transition-colors group-hover:text-clay" strokeWidth={1.5} />
                     </Link>
                   </li>
                 ))}
