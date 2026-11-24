@@ -9,10 +9,7 @@ export function Logo({ tone = "ink", align = "center" }: { tone?: "ink" | "canva
         tone === "canvas" ? "text-canvas" : "text-ink"
       }`}
     >
-      <span className="display text-[1.75rem] md:text-[2rem] tracking-[-0.03em]">Bhavani</span>
-      <span className="eyebrow mt-1 text-[0.55rem] tracking-[0.5em] opacity-70 transition-opacity group-hover:opacity-100">
-        Fashion
-      </span>
+      <span className="display text-[1.85rem] md:text-[2.1rem] tracking-[-0.03em]">Bhavani</span>
     </Link>
   );
 }
