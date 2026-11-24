@@ -25,8 +25,6 @@ export type Dashboard = {
     paymentMethod: PaymentMethod;
     createdAt: string;
   }[];
-  /** Last 7 IST days, oldest first (absent on an older API) */
-  daily?: { date: string; orders: number; revenue: number }[];
 };
 
 export type AdminAlerts = {

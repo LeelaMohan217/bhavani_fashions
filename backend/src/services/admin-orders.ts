@@ -212,23 +212,13 @@ export async function alerts() {
   };
 }
 
-// The store runs on Indian time; "today" and the daily chart use IST days whatever the server's zone.
-const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
-const DAY_MS = 24 * 60 * 60 * 1000;
-const istDayKey = (d: Date) => new Date(d.getTime() + IST_OFFSET_MS).toISOString().slice(0, 10);
-/** Start of the IST day `daysAgo` days before today, as a UTC instant */
-const istDayStart = (daysAgo: number) => {
-  const nowIst = Date.now() + IST_OFFSET_MS;
-  return new Date(Math.floor(nowIst / DAY_MS) * DAY_MS - daysAgo * DAY_MS - IST_OFFSET_MS);
-};
-
 export async function dashboard() {
-  const startOfToday = istDayStart(0);
-  const chartStart = istDayStart(6); // today + previous 6 days
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const live: Prisma.OrderWhereInput = { status: { notIn: ["PENDING_PAYMENT", "CANCELLED"] } };
 
-  const [today, month, toFulfil, byMethod, lowStockCount, lowStock, recent, week] = await Promise.all([
+  const [today, month, toFulfil, byMethod, lowStockCount, lowStock, recent] = await Promise.all([
     prisma.order.aggregate({ where: { ...live, createdAt: { gte: startOfToday } }, _count: true, _sum: { total: true } }),
     prisma.order.aggregate({ where: { ...live, createdAt: { gte: thirtyDaysAgo } }, _count: true, _sum: { total: true } }),
     prisma.order.count({ where: { status: { in: ["CONFIRMED", "PACKED"] } } }),
@@ -251,21 +241,7 @@ export async function dashboard() {
       take: 6,
       select: { id: true, number: true, fullName: true, total: true, status: true, paymentMethod: true, createdAt: true },
     }),
-    prisma.order.findMany({
-      where: { ...live, createdAt: { gte: chartStart } },
-      select: { createdAt: true, total: true },
-    }),
   ]);
-
-  // Last 7 IST days, oldest first, including empty days
-  const daily = Array.from({ length: 7 }, (_, i) => ({ date: istDayKey(istDayStart(6 - i)), orders: 0, revenue: 0 }));
-  for (const o of week) {
-    const day = daily.find((d) => d.date === istDayKey(o.createdAt));
-    if (day) {
-      day.orders += 1;
-      day.revenue += o.total;
-    }
-  }
 
   const method = (m: "COD" | "RAZORPAY") => {
     const row = byMethod.find((r) => r.paymentMethod === m);
@@ -280,6 +256,5 @@ export async function dashboard() {
     lowStockCount,
     lowStock,
     recentOrders: recent.map((o) => ({ ...o, number: formatOrderNumber(o.number) })),
-    daily,
   };
 }

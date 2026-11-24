@@ -40,12 +40,6 @@
   --animate-sidebar-in: sidebar-in 0.5s var(--ease-editorial) both;
   --animate-palette-in: palette-in 0.22s var(--ease-editorial) both;
   --animate-sheet-up: sheet-up 0.4s var(--ease-editorial) both;
-  --animate-bar-grow: bar-grow 0.7s var(--ease-editorial) both;
-
-  @keyframes bar-grow {
-    from { transform: scaleY(0); }
-    to { transform: scaleY(1); }
-  }
 
   @keyframes sheet-up {
     from { transform: translateY(100%); }
