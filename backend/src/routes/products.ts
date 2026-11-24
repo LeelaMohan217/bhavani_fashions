@@ -12,6 +12,7 @@ const boolParam = z
   .optional();
 
 const ListQuery = z.object({
+  q: z.string().trim().max(80).optional(),
   category: z.string().optional(),
   featured: boolParam,
   new: boolParam,
@@ -63,6 +64,18 @@ productsRouter.get("/", async (req, res) => {
 
   const where: Prisma.ProductWhereInput = {
     isActive: true,
+    // Search: every word must match the name, fabric, occasion, category or a colour
+    ...(q.q && {
+      AND: q.q.split(/\s+/).map((word) => ({
+        OR: [
+          { name: { contains: word, mode: "insensitive" } },
+          { fabric: { contains: word, mode: "insensitive" } },
+          { occasion: { contains: word, mode: "insensitive" } },
+          { category: { name: { contains: word, mode: "insensitive" } } },
+          { variants: { some: { color: { contains: word, mode: "insensitive" } } } },
+        ],
+      })) satisfies Prisma.ProductWhereInput[],
+    }),
     ...(q.category && { category: { slug: q.category } }),
     ...(q.featured !== undefined && { isFeatured: q.featured }),
     ...(q.new !== undefined && { isNewArrival: q.new }),

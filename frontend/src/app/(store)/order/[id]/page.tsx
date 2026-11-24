@@ -7,12 +7,13 @@ import { ArrowRight, Check, CircleAlert, Clock } from "lucide-react";
 import { getOrder } from "@/lib/api";
 import { formatPrice } from "@/lib/format";
 import type { OrderDetail } from "@/lib/types";
+import { OrderSkeleton } from "@/components/skeletons";
 
 export const metadata: Metadata = { title: "Your order", robots: { index: false } };
 
 export default function OrderPage({ params }: PageProps<"/order/[id]">) {
   return (
-    <Suspense fallback={<div className="container-x h-[70vh] animate-pulse pt-16" aria-busy />}>
+    <Suspense fallback={<OrderSkeleton />}>
       <Order params={params} />
     </Suspense>
   );
@@ -141,6 +142,18 @@ function Status({ order, firstName }: { order: OrderDetail; firstName: string })
             ` Please keep ${formatPrice(order.total)} ready to pay when your order arrives.`}{" "}
           Keep your order number handy for any questions.
         </p>
+        {order.courierName && order.trackingNumber && (
+          <dl className="mt-8 inline-flex gap-8 border border-line px-5 py-4 text-sm">
+            <div>
+              <dt className="eyebrow text-stone">Courier</dt>
+              <dd className="mt-1">{order.courierName}</dd>
+            </div>
+            <div>
+              <dt className="eyebrow text-stone">Tracking number</dt>
+              <dd className="mt-1 tabular-nums">{order.trackingNumber}</dd>
+            </div>
+          </dl>
+        )}
       </header>
     );
   }
@@ -170,7 +183,7 @@ function Status({ order, firstName }: { order: OrderDetail; firstName: string })
       <h1 className="display mt-4 text-5xl md:text-7xl">Order cancelled</h1>
       <p className="mt-6 max-w-lg leading-relaxed text-ink-soft">
         {order.paymentStatus === "REFUND_DUE"
-          ? "A piece sold out just before your payment completed. A full refund will reach your account within 5–7 working days."
+          ? "A piece sold out just before your payment completed. A full refund will reach your account within 5 to 7 working days."
           : "This order has been cancelled."}
       </p>
     </header>

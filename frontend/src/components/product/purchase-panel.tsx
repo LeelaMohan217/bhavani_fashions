@@ -2,13 +2,13 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { LoaderCircle, Minus, Plus, Ruler, ShoppingBag } from "lucide-react";
-import type { ProductVariant } from "@/lib/types";
+import type { ProductCard, ProductVariant } from "@/lib/types";
 import { WishlistButton } from "../wishlist-button";
 import { useCart } from "../cart/cart-provider";
 
 const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL"];
 
-export function PurchasePanel({ name, variants }: { name: string; variants: ProductVariant[] }) {
+export function PurchasePanel({ product, variants }: { product: ProductCard; variants: ProductVariant[] }) {
   const colors = useMemo(() => {
     const map = new Map<string, string>();
     for (const v of variants) map.set(v.color, v.colorHex);
@@ -52,7 +52,7 @@ export function PurchasePanel({ name, variants }: { name: string; variants: Prod
       {colors.length > 0 && (
         <fieldset>
           <legend className="eyebrow text-stone">
-            Colour — <span className="text-ink">{color}</span>
+            Colour: <span className="text-ink">{color}</span>
           </legend>
           <div className="mt-4 flex flex-wrap gap-3">
             {colors.map((c) => (
@@ -120,7 +120,7 @@ export function PurchasePanel({ name, variants }: { name: string; variants: Prod
       {selected && selected.stock > 0 && selected.stock <= 4 && (
         <p className="flex items-center gap-2 text-sm text-clay">
           <span className="size-1.5 rounded-full bg-clay" />
-          Only {selected.stock} left — handwoven pieces rarely restock.
+          Only {selected.stock} left. Handwoven pieces rarely restock.
         </p>
       )}
 
@@ -161,7 +161,7 @@ export function PurchasePanel({ name, variants }: { name: string; variants: Prod
           {soldOut ? "Sold out" : adding ? "Adding…" : "Add to bag"}
         </button>
 
-        <WishlistButton name={name} className="size-14 rounded-none border border-line bg-transparent hover:bg-sand" />
+        <WishlistButton product={product}className="size-14 rounded-none border border-line bg-transparent hover:bg-sand" />
       </div>
 
       {notice && (

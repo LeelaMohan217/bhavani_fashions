@@ -165,7 +165,7 @@ export async function createProduct(input: z.infer<typeof ProductInput>) {
     data: {
       ...fields,
       slug,
-      images: { create: images.map((img, position) => ({ ...img, alt: img.alt || `${input.name} — view ${position + 1}`, position })) },
+      images: { create: images.map((img, position) => ({ ...img, alt: img.alt || `${input.name}, view ${position + 1}`, position })) },
       variants: { create: variants.map(({ id: _id, ...v }) => ({ ...v, sku: v.sku.toUpperCase() })) },
     },
   });
@@ -187,7 +187,7 @@ export async function updateProduct(id: string, input: z.infer<typeof ProductInp
     // Images: replace in the given order
     await tx.productImage.deleteMany({ where: { productId: id } });
     await tx.productImage.createMany({
-      data: images.map((img, position) => ({ productId: id, url: img.url, alt: img.alt || `${input.name} — view ${position + 1}`, position })),
+      data: images.map((img, position) => ({ productId: id, url: img.url, alt: img.alt || `${input.name}, view ${position + 1}`, position })),
     });
 
     // Variants: delete removed, update kept, create new (order history keeps its snapshots)

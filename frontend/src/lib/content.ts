@@ -12,7 +12,7 @@ export const NAV_LINKS = [
 ] as const;
 
 export const HERO = {
-  eyebrow: "The Festive Edit — Winter 2026",
+  eyebrow: "The Festive Edit, Winter 2026",
   image: unsplash("1617627143750-d86bc21e42bb"),
   imageAlt: "Woman wearing a pink and orange organza saree with gold jewellery",
   inset: unsplash("1641699862936-be9f49b1c38d"),

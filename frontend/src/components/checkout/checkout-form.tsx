@@ -21,6 +21,7 @@ import { INDIAN_STATES } from "@/lib/india";
 import type { Cart, CheckoutConfig, PaymentMethod } from "@/lib/types";
 import { useCart } from "../cart/cart-provider";
 import { openRazorpay } from "./razorpay";
+import { CheckoutSkeleton } from "../skeletons";
 
 type Errors = Partial<Record<keyof FormValues, string>>;
 
@@ -87,7 +88,7 @@ export function CheckoutForm({ config }: { config: CheckoutConfig }) {
       const payment = await openRazorpay(res.razorpay);
       if (!payment) {
         setStage("idle");
-        setFormError("Payment was cancelled. Your bag is saved — you can try again whenever you're ready.");
+        setFormError("Payment was cancelled. Your bag is saved, so you can try again whenever you're ready.");
         return;
       }
       setStage("verifying");
@@ -110,7 +111,7 @@ export function CheckoutForm({ config }: { config: CheckoutConfig }) {
     }
   }
 
-  if (loading) return <div className="container-x h-[70vh] animate-pulse pt-16" aria-busy />;
+  if (loading) return <CheckoutSkeleton />;
 
   if (!cart || cart.items.length === 0) {
     return (
@@ -213,7 +214,7 @@ export function CheckoutForm({ config }: { config: CheckoutConfig }) {
                 title="Pay online"
                 subtitle={
                   config.razorpayEnabled
-                    ? "UPI, cards, net banking & wallets — secured by Razorpay"
+                    ? "UPI, cards, net banking and wallets, secured by Razorpay"
                     : "Online payment is coming soon"
                 }
                 icons={[Smartphone, CreditCard, Landmark]}

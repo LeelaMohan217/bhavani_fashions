@@ -128,6 +128,10 @@ export type OrderDetail = {
   codFee: number;
   total: number;
   createdAt: string;
+  courierName: string | null;
+  trackingNumber: string | null;
+  shippedAt: string | null;
+  deliveredAt: string | null;
   items: {
     id: string;
     productName: string;

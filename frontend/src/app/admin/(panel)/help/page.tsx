@@ -31,7 +31,7 @@ const GUIDES: { q: string; a: string[] }[] = [
     ],
   },
   {
-    q: "A customer wants to cancel — what happens?",
+    q: "A customer wants to cancel. What happens?",
     a: [
       "Open the order and press Cancel order, then confirm.",
       "The pieces go back into stock automatically.",
@@ -43,7 +43,7 @@ const GUIDES: { q: string; a: string[] }[] = [
     a: [
       "Go to Products → New product.",
       "Fill in the name, description, category and price.",
-      "Paste image links (Unsplash or Cloudinary) — the first image is the cover.",
+      "Paste image links (Unsplash or Cloudinary). The first image is the cover.",
       "Add a variant for each colour and size with its stock, then press Create product.",
     ],
   },
@@ -133,7 +133,7 @@ export default function HelpPage() {
             }
           >
             <p className="text-sm leading-relaxed text-neutral-600">
-              For anything the guides don&rsquo;t cover — a bug, a payment question or a new feature —
+              For anything the guides don&rsquo;t cover, such as a bug, a payment question or a new feature,
               contact your website developer with the order number or a screenshot.
             </p>
             <p className="mt-4 flex items-center gap-2 text-xs text-neutral-500">

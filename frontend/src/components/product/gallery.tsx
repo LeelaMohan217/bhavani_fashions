@@ -19,7 +19,7 @@ export function Gallery({ images, name }: { images: ProductImage[]; name: string
   };
 
   if (images.length === 0) {
-    return <div className="aspect-[3/4] bg-sand" aria-label={`${name} — image coming soon`} />;
+    return <div className="aspect-[3/4] bg-sand" aria-label={`${name}, image coming soon`} />;
   }
 
   return (

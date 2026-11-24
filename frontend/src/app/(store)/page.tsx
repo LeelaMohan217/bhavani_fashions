@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, MessageCircle, RotateCcw, ShieldCheck, Truck } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { connection } from "next/server";
 import { getCategories, getProducts } from "@/lib/api";
 import { HERO, STORY } from "@/lib/content";
@@ -23,7 +23,7 @@ export default function HomePage() {
             </h2>
           </div>
           <p className="max-w-sm text-sm leading-relaxed text-stone md:col-span-4 md:col-start-9">
-            From six-yard heirlooms to easy everyday sets — each piece is chosen by hand and
+            From six-yard heirlooms to easy everyday sets, each piece is chosen by hand and
             checked twice before it reaches you.
           </p>
         </div>
@@ -43,7 +43,7 @@ export default function HomePage() {
 
       <Story />
 
-      <section className="container-x mt-28 md:mt-40" aria-label="The Bhavani edit">
+      <section className="container-x mt-28 pb-28 md:mt-40 md:pb-40" aria-label="The Bhavani edit">
         <SectionHeading
           eyebrow="Most loved"
           title={
@@ -61,7 +61,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      <Services />
     </>
   );
 }
@@ -76,7 +75,7 @@ function Hero() {
             Woven for the moments <em className="italic text-clay">you</em> keep.
           </h1>
           <p className="mt-7 max-w-sm text-[0.95rem] leading-relaxed text-ink-soft">
-            Handloom sarees, festive lehengas and easy kurta sets — handpicked from India&rsquo;s
+            Handloom sarees, festive lehengas and easy kurta sets, handpicked from India&rsquo;s
             weaving clusters and delivered to your door.
           </p>
           <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
@@ -98,7 +97,7 @@ function Hero() {
             <Image src={HERO.inset} alt={HERO.insetAlt} fill sizes="176px" className="object-cover" />
           </div>
           <figcaption className="max-w-[13rem] pb-1 text-xs leading-relaxed text-stone">
-            <span className="eyebrow block text-ink">Detail — Tussar silk</span>
+            <span className="eyebrow block text-ink">Tussar silk detail</span>
             <span className="mt-2 block">Antique-gold zari, hand-finished in Bhagalpur.</span>
           </figcaption>
         </figure>
@@ -115,8 +114,7 @@ function Hero() {
             className="object-cover"
           />
           <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-ink/45 to-transparent" />
-        </div>
-        <Link
+          <Link
           href={HERO.featured.href}
           className="group absolute bottom-5 left-5 right-5 flex items-center justify-between text-canvas md:bottom-8 md:left-8 md:right-8"
         >
@@ -127,7 +125,8 @@ function Hero() {
           <span className="inline-flex size-11 items-center justify-center rounded-full border border-canvas/50 transition-colors group-hover:bg-canvas group-hover:text-ink">
             <ArrowUpRight className="size-4" strokeWidth={1.5} />
           </span>
-        </Link>
+          </Link>
+        </div>
       </div>
     </section>
   );
@@ -156,7 +155,7 @@ async function Categories() {
             </div>
             <div className="mt-5 flex items-baseline justify-between gap-4">
               <div>
-                <p className="eyebrow text-stone">0{i + 1} — {c.tagline}</p>
+                <p className="eyebrow flex gap-3 text-stone"><span>0{i + 1}</span><span>{c.tagline}</span></p>
                 <h3 className="display mt-2 text-4xl">{c.name}</h3>
               </div>
               <span className="eyebrow inline-flex items-center gap-2 whitespace-nowrap text-ink-soft group-hover:text-clay">
@@ -191,7 +190,7 @@ async function ProductRow({ query }: { query: Parameters<typeof getProducts>[0] 
   const items = all.length >= 4 ? all.slice(0, all.length - (all.length % 4)) : all;
 
   if (items.length === 0) {
-    return <p className="text-sm text-stone">New pieces are on their way — check back soon.</p>;
+    return <p className="text-sm text-stone">New pieces are on their way. Check back soon.</p>;
   }
 
   return (
@@ -213,11 +212,11 @@ function Story() {
         <div className="md:col-span-6 md:col-start-7">
           <p className="eyebrow text-clay">Our craft</p>
           <h2 id="story-title" className="display mt-5 text-[2.6rem] md:text-[4.25rem]">
-            From the loom to your wardrobe — <em className="italic">with nothing lost between.</em>
+            From the loom to your wardrobe, <em className="italic">with nothing lost between.</em>
           </h2>
           <p className="mt-8 max-w-lg leading-relaxed text-ink-soft">
             We work directly with weavers in Kanchipuram, Varanasi, Chanderi and Bengal. No
-            middlemen, no mass production — just honest prices for cloth that was made slowly,
+            middlemen and no mass production, just honest prices for cloth that was made slowly,
             by hand, and made to last.
           </p>
           <dl className="mt-12 grid max-w-lg grid-cols-3 gap-6 border-t border-ink/15 pt-8">
@@ -234,36 +233,6 @@ function Story() {
           </dl>
         </div>
       </div>
-    </section>
-  );
-}
-
-function Services() {
-  const items = [
-    { icon: Truck, title: "Free shipping", text: "On every order across India, delivered in 4–7 days." },
-    { icon: RotateCcw, title: "7-day returns", text: "Not quite right? Return or exchange, no questions." },
-    { icon: ShieldCheck, title: "Secure checkout", text: "UPI, cards, net banking and cash on delivery." },
-    { icon: MessageCircle, title: "Styling on WhatsApp", text: "Real people to help you choose the right drape." },
-  ];
-
-  return (
-    <section className="container-x mt-28 border-t border-line md:mt-40" aria-label="Our promises">
-      <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        {items.map(({ icon: Icon, title, text }, i) => (
-          <li
-            key={title}
-            className={`flex gap-4 py-10 lg:px-8 ${i > 0 ? "border-t border-line sm:border-t-0 lg:border-l" : "lg:pl-0"} ${
-              i === 2 ? "sm:border-t lg:border-t-0" : ""
-            } ${i === 3 ? "sm:border-t lg:border-t-0" : ""} ${i % 2 === 1 ? "sm:border-l sm:pl-8" : ""}`}
-          >
-            <Icon className="mt-0.5 size-5 shrink-0 text-clay" strokeWidth={1.25} />
-            <div>
-              <h3 className="font-display text-lg">{title}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-stone">{text}</p>
-            </div>
-          </li>
-        ))}
-      </ul>
     </section>
   );
 }

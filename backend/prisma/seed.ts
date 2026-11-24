@@ -143,7 +143,7 @@ const sarees: Seed[] = [
     name: "Neelambari Linen Saree",
     slug: "neelambari-linen-saree",
     description:
-      "Pure linen in sunflower yellow with an indigo border. Cool, structured and quietly striking — made for summer.",
+      "Pure linen in sunflower yellow with an indigo border. Cool, structured and quietly striking, made for summer.",
     fabric: "Linen",
     occasion: "Everyday",
     price: rupees(3450),
@@ -155,7 +155,7 @@ const sarees: Seed[] = [
     name: "Gulmohar Bandhani Saree",
     slug: "gulmohar-bandhani-saree",
     description:
-      "Hand-tied Bandhani from Gujarat in vivid red and white dots — a joyful classic for festivals and family gatherings.",
+      "Hand-tied Bandhani from Gujarat in vivid red and white dots. A joyful classic for festivals and family gatherings.",
     fabric: "Art Silk",
     occasion: "Festive",
     price: rupees(3190),
@@ -255,7 +255,7 @@ const CATEGORIES = [
     slug: "sarees",
     tagline: "Six yards of story",
     description:
-      "Handwoven silks, featherlight organzas and everyday cottons — sourced from India's finest weaving clusters.",
+      "Handwoven silks, featherlight organzas and everyday cottons, sourced from India's finest weaving clusters.",
     imageUrl: PHOTOS.sariPinkOrange,
     sortOrder: 1,
     products: sarees,
@@ -328,7 +328,7 @@ async function main() {
             create: p.images.map((url, position) => ({
               url,
               position,
-              alt: `${p.name} — view ${position + 1}`,
+              alt: `${p.name}, view ${position + 1}`,
             })),
           },
           variants: { create: variants },

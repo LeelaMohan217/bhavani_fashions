@@ -67,8 +67,8 @@ export function CartLine({
         {item.unavailable && (
           <p className="mt-2 text-xs text-clay">
             {item.maxQuantity === 0
-              ? "Sold out — please remove to continue."
-              : `Only ${item.maxQuantity} left — please reduce the quantity.`}
+              ? "Sold out. Please remove it to continue."
+              : `Only ${item.maxQuantity} left. Please reduce the quantity.`}
           </p>
         )}
 

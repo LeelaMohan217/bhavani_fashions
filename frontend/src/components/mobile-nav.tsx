@@ -75,8 +75,12 @@ export function MobileNav() {
               </ul>
 
               <div className="mt-auto space-y-3 text-sm text-ink-soft">
-                {["My account", "Wishlist", "Track order", "WhatsApp us"].map((label) => (
-                  <Link key={label} href="#" onClick={close} className="flex items-center justify-between py-1">
+                {[
+                  ["Wishlist", "/wishlist"],
+                  ["Track order", "/track-order"],
+                  ["Contact us", "/contact"],
+                ].map(([label, href]) => (
+                  <Link key={href} href={href} onClick={close} className="flex items-center justify-between py-1">
                     {label}
                     <ArrowUpRight className="size-4 text-stone" strokeWidth={1.5} />
                   </Link>

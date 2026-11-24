@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { getCategories, getCategory, getProducts } from "@/lib/api";
 import type { SortOption } from "@/lib/types";
@@ -34,13 +34,6 @@ export async function ProductListing({
 
   if (categorySlug && !category) notFound();
 
-  const title = category?.name ?? (onlyNew ? "New arrivals" : "All pieces");
-  const intro =
-    category?.description ??
-    (onlyNew
-      ? "The latest weaves and silhouettes, fresh from our artisans."
-      : "Every saree, lehenga and kurta set in the Bhavani collection.");
-
   const pageHref = (p: number) => {
     const params = new URLSearchParams();
     if (onlyNew) params.set("filter", "new");
@@ -49,6 +42,16 @@ export async function ProductListing({
     const qs = params.toString();
     return `${categorySlug ? `/shop/${categorySlug}` : "/shop"}${qs ? `?${qs}` : ""}`;
   };
+
+  // A page past the end (old link, edited URL) goes to the last real page.
+  if (page > list.totalPages) redirect(pageHref(list.totalPages));
+
+  const title = category?.name ?? (onlyNew ? "New arrivals" : "All pieces");
+  const intro =
+    category?.description ??
+    (onlyNew
+      ? "The latest weaves and silhouettes, fresh from our artisans."
+      : "Every saree, lehenga and kurta set in the Bhavani collection.");
 
   return (
     <>

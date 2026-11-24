@@ -158,7 +158,7 @@ export async function updateOrderStatus(id: string, input: z.infer<typeof Status
 
     await tx.order.update({ where: { id }, data });
     await tx.orderEvent.create({
-      data: { orderId: id, adminId, type: `status:${input.status}`, message: input.note ? `${message} — ${input.note}` : message },
+      data: { orderId: id, adminId, type: `status:${input.status}`, message: input.note ? `${message}. Note: ${input.note}` : message },
     });
   });
 

@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { Heart, Search, User } from "lucide-react";
 import { BagButton } from "./cart/bag-button";
 import { NAV_LINKS } from "@/lib/content";
 import { Logo } from "./logo";
 import { MobileNav } from "./mobile-nav";
+import { SearchButton } from "./search-overlay";
+import { WishlistLink } from "./wishlist-button";
 
 // Display is set per element (inline-flex vs hidden md:inline-flex) so the classes never conflict
 const iconButton = "size-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-sand";
@@ -30,15 +31,8 @@ export function SiteHeader() {
         <Logo />
 
         <div className="flex items-center justify-end gap-0.5 md:gap-1">
-          <button type="button" aria-label="Search" className={`${iconButton} inline-flex`}>
-            <Search className="size-[1.15rem]" strokeWidth={1.5} />
-          </button>
-          <Link href="#" aria-label="Account" className={`${iconButton} hidden md:inline-flex`}>
-            <User className="size-[1.15rem]" strokeWidth={1.5} />
-          </Link>
-          <Link href="#" aria-label="Wishlist" className={`${iconButton} hidden md:inline-flex`}>
-            <Heart className="size-[1.15rem]" strokeWidth={1.5} />
-          </Link>
+          <SearchButton className={`${iconButton} inline-flex`} />
+          <WishlistLink className={`${iconButton} hidden md:inline-flex`} />
           <BagButton className={iconButton} />
         </div>
       </div>

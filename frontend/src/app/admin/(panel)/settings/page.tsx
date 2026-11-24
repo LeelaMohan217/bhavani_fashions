@@ -78,7 +78,7 @@ async function SettingsContent() {
           rows={[
             ["Shipping fee", config.shippingFee === 0 ? "Free across India" : formatPrice(config.shippingFee)],
             ["Dispatch time", "Within 48 hours"],
-            ["Delivery estimate", "4–7 working days"],
+            ["Delivery estimate", "4 to 7 working days"],
             ["Returns", "7 days from delivery"],
             ["Max quantity per piece", "5"],
           ]}
@@ -113,7 +113,7 @@ async function SettingsContent() {
         </div>
         <p className="mt-4 text-xs leading-relaxed text-neutral-500">
           Sessions last 7 days. To change your name or password, ask your developer to run the
-          admin account command — resetting a password signs out all your devices.
+          admin account command. Resetting a password signs out all your devices.
         </p>
       </Card>
     </div>

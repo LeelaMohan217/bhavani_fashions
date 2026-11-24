@@ -6,6 +6,7 @@ import { Plus, RotateCcw, Truck } from "lucide-react";
 import { getProduct } from "@/lib/api";
 import { Gallery } from "@/components/product/gallery";
 import { PurchasePanel } from "@/components/product/purchase-panel";
+import { cardFromDetail } from "@/lib/product-card";
 import { Price } from "@/components/price";
 import { ProductCard } from "@/components/product-card";
 
@@ -41,7 +42,7 @@ async function Product({ params }: Pick<PageProps<"/products/[slug]">, "params">
     },
     {
       title: "Shipping & returns",
-      body: "Free shipping across India, dispatched within 48 hours and delivered in 4–7 working days. Returns and exchanges are accepted within 7 days of delivery on unworn pieces with tags intact.",
+      body: "Free shipping across India, dispatched within 48 hours and delivered in 4 to 7 working days. Returns and exchanges are accepted within 7 days of delivery on unworn pieces with tags intact.",
     },
   ];
 
@@ -87,13 +88,13 @@ async function Product({ params }: Pick<PageProps<"/products/[slug]">, "params">
               </div>
 
               <div className="mt-9">
-                <PurchasePanel name={product.name} variants={product.variants} />
+                <PurchasePanel product={cardFromDetail(product)} variants={product.variants} />
               </div>
 
               <ul className="mt-9 grid gap-4 border-y border-line py-6 text-sm text-ink-soft sm:grid-cols-2">
                 <li className="flex items-start gap-3">
                   <Truck className="mt-0.5 size-4 shrink-0 text-clay" strokeWidth={1.5} />
-                  Free delivery in 4–7 days
+                  Free delivery in 4 to 7 days
                 </li>
                 <li className="flex items-start gap-3">
                   <RotateCcw className="mt-0.5 size-4 shrink-0 text-clay" strokeWidth={1.5} />

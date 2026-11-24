@@ -37,6 +37,7 @@ export async function getCategory(slug: string): Promise<Category | null> {
 }
 
 export type ProductQuery = {
+  q?: string;
   category?: string;
   featured?: boolean;
   isNew?: boolean;
@@ -51,6 +52,7 @@ export async function getProducts(query: ProductQuery = {}): Promise<ProductList
   cacheTag("catalogue");
 
   const params = new URLSearchParams();
+  if (query.q) params.set("q", query.q);
   if (query.category) params.set("category", query.category);
   if (query.featured !== undefined) params.set("featured", String(query.featured));
   if (query.isNew !== undefined) params.set("new", String(query.isNew));

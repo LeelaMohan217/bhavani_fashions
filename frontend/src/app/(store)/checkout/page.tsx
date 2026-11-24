@@ -3,12 +3,13 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { getCheckoutConfig } from "@/lib/api";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
+import { CheckoutSkeleton } from "@/components/skeletons";
 
 export const metadata: Metadata = { title: "Checkout", robots: { index: false } };
 
 export default function CheckoutPage() {
   return (
-    <Suspense fallback={<div className="container-x h-[70vh] animate-pulse pt-16" aria-busy />}>
+    <Suspense fallback={<CheckoutSkeleton />}>
       <Checkout />
     </Suspense>
   );

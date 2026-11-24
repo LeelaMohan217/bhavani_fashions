@@ -14,19 +14,17 @@ const COLUMNS = [
   {
     title: "Help",
     links: [
-      ["Track order", "#"],
-      ["Shipping policy", "#"],
-      ["Returns & exchanges", "#"],
-      ["Contact us", "#"],
+      ["Track order", "/track-order"],
+      ["Shipping policy", "/shipping"],
+      ["Returns & exchanges", "/returns"],
+      ["Contact us", "/contact"],
     ],
   },
   {
     title: "Bhavani",
     links: [
-      ["Our story", "#"],
-      ["Instagram", "#"],
-      ["YouTube", "#"],
-      ["WhatsApp", "#"],
+      ["Our story", "/our-story"],
+      ["Wishlist", "/wishlist"],
     ],
   },
 ] as const;
@@ -74,8 +72,8 @@ export function SiteFooter() {
         <div className="container-x flex flex-col gap-3 py-6 text-xs text-canvas/50 md:flex-row md:items-center md:justify-between">
           <p>© {2026} Bhavani Fashion. All rights reserved.</p>
           <div className="flex gap-6">
-            <Link href="#" className="hover:text-canvas">Privacy</Link>
-            <Link href="#" className="hover:text-canvas">Terms</Link>
+            <Link href="/privacy" className="hover:text-canvas">Privacy</Link>
+            <Link href="/terms" className="hover:text-canvas">Terms</Link>
           </div>
         </div>
       </div>

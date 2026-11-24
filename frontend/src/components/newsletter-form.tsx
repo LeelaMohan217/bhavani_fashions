@@ -23,7 +23,7 @@ export function NewsletterForm() {
         type="email"
         required
         disabled={done}
-        placeholder={done ? "Thank you — see you soon." : "Your email address"}
+        placeholder={done ? "Thank you, see you soon." : "Your email address"}
         className="h-12 flex-1 bg-transparent text-sm text-canvas placeholder:text-canvas/45 focus:outline-none"
       />
       <button

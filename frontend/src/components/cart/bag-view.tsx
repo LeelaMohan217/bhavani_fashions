@@ -5,6 +5,7 @@ import { ArrowRight, Lock, RotateCcw, Truck } from "lucide-react";
 import { formatPrice } from "@/lib/format";
 import { useCart } from "./cart-provider";
 import { CartLine } from "./cart-line";
+import { BagSkeleton } from "../skeletons";
 
 export function BagView() {
   const { cart, loading } = useCart();
@@ -24,7 +25,7 @@ export function BagView() {
       </h1>
 
       {loading ? (
-        <div className="mt-12 h-64 animate-pulse bg-sand" aria-busy />
+        <BagSkeleton />
       ) : items.length === 0 ? (
         <div className="mt-12 border-t border-line py-24 text-center">
           <p className="display text-3xl">Nothing in your bag yet</p>
@@ -85,7 +86,7 @@ export function BagView() {
 
               <ul className="mt-6 space-y-3 border-t border-ink/10 pt-6 text-xs text-ink-soft">
                 <li className="flex items-center gap-3">
-                  <Truck className="size-4 text-clay" strokeWidth={1.5} /> Free delivery in 4–7 days across India
+                  <Truck className="size-4 text-clay" strokeWidth={1.5} /> Free delivery in 4 to 7 days across India
                 </li>
                 <li className="flex items-center gap-3">
                   <RotateCcw className="size-4 text-clay" strokeWidth={1.5} /> Easy 7-day returns and exchanges

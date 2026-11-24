@@ -44,7 +44,7 @@ export const VerifyPaymentSchema = z.object({
 
 class OutOfStockError extends HttpError {
   constructor() {
-    super(409, "Sorry — a piece in your bag sold out while you were checking out.");
+    super(409, "Sorry, a piece in your bag sold out while you were checking out.");
   }
 }
 
@@ -197,11 +197,31 @@ export async function verifyPayment(input: z.infer<typeof VerifyPaymentSchema>) 
       });
       throw new HttpError(
         409,
-        "A piece sold out just before your payment completed. Your order is cancelled and a full refund will be issued within 5–7 days.",
+        "A piece sold out just before your payment completed. Your order is cancelled and a full refund will be issued within 5 to 7 days.",
       );
     }
     throw e;
   }
+}
+
+export const TrackOrderSchema = z.object({
+  number: z
+    .string()
+    .trim()
+    .regex(/^(?:BF)?\d{5,}$/i, "Enter your order number, for example BF10023"),
+  phone,
+});
+
+/** Finds an order by its customer-facing number plus the phone used at checkout. */
+export async function trackOrder(input: z.infer<typeof TrackOrderSchema>) {
+  const number = Number(input.number.replace(/^BF/i, "")) - 10000;
+  const order =
+    number > 0
+      ? await prisma.order.findFirst({ where: { number, phone: input.phone }, select: { id: true } })
+      : null;
+  // Same message whether the number or the phone is wrong, so orders can't be probed.
+  if (!order) throw new HttpError(404, "We couldn't find an order with that number and mobile number.");
+  return { orderId: order.id };
 }
 
 export async function getOrder(orderId: string) {
@@ -232,6 +252,10 @@ export async function getOrder(orderId: string) {
     codFee: order.codFee,
     total: order.total,
     createdAt: order.createdAt,
+    courierName: order.courierName,
+    trackingNumber: order.trackingNumber,
+    shippedAt: order.shippedAt,
+    deliveredAt: order.deliveredAt,
     items: order.items.map((i) => ({
       id: i.id,
       productName: i.productName,

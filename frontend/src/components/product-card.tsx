@@ -52,7 +52,7 @@ export function ProductCard({
         </div>
 
         <WishlistButton
-          name={product.name}
+          product={product}
           className="absolute right-3 top-3 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
         />
 

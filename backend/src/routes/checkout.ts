@@ -1,7 +1,9 @@
 import { Router } from "express";
 import {
   PlaceOrderSchema,
+  TrackOrderSchema,
   VerifyPaymentSchema,
+  trackOrder,
   checkoutConfig,
   getOrder,
   placeOrder,
@@ -26,6 +28,11 @@ checkoutRouter.post("/", async (req, res) => {
 checkoutRouter.post("/verify", async (req, res) => {
   const input = VerifyPaymentSchema.parse(req.body);
   res.json(await verifyPayment(input));
+});
+
+// POST /api/orders/track — look up an order by number + phone; returns its id
+ordersRouter.post("/track", async (req, res) => {
+  res.json(await trackOrder(TrackOrderSchema.parse(req.body)));
 });
 
 // GET /api/orders/:orderId — order confirmation details (order ids are unguessable cuids)

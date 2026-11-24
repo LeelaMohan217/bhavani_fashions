@@ -4,7 +4,7 @@ export function Logo({ tone = "ink" }: { tone?: "ink" | "canvas" }) {
   return (
     <Link
       href="/"
-      aria-label="Bhavani Fashion — home"
+      aria-label="Bhavani Fashion home"
       className={`group inline-flex flex-col items-center leading-none ${
         tone === "canvas" ? "text-canvas" : "text-ink"
       }`}
