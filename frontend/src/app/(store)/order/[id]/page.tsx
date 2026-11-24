@@ -8,6 +8,7 @@ import { getOrder } from "@/lib/api";
 import { formatPrice } from "@/lib/format";
 import type { OrderDetail } from "@/lib/types";
 import { OrderSkeleton } from "@/components/skeletons";
+import { RememberOrder } from "@/components/remember-order";
 
 export const metadata: Metadata = { title: "Your order", robots: { index: false } };
 
@@ -30,6 +31,7 @@ async function Order({ params }: Pick<PageProps<"/order/[id]">, "params">) {
 
   return (
     <div className="container-x pb-10 pt-12 md:pt-20">
+      <RememberOrder id={order.id} number={order.number} />
       <Status order={order} firstName={firstName} />
 
       <div className="mt-16 grid gap-14 lg:grid-cols-12 lg:gap-16">

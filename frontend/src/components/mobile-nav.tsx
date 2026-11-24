@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { ArrowUpRight, ChevronRight, Menu, X } from "lucide-react";
+import { ArrowRight, ArrowUpRight, ChevronRight, Menu, Package, X } from "lucide-react";
 import { NAV_LINKS } from "@/lib/content";
+import { useRecentOrder } from "@/lib/recent-order";
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
+  const recentOrder = useRecentOrder();
 
   // Lock page scroll and allow Escape to close while open
   useEffect(() => {
@@ -72,17 +74,36 @@ export function MobileNav() {
                 ))}
               </ul>
 
-              <div className="mt-auto space-y-3 text-sm text-ink-soft">
-                {[
-                  ["Wishlist", "/wishlist"],
-                  ["Track order", "/track-order"],
-                  ["Contact us", "/contact"],
-                ].map(([label, href]) => (
-                  <Link key={href} href={href} onClick={close} className="flex items-center justify-between py-1">
-                    {label}
-                    <ArrowUpRight className="size-4 text-stone" strokeWidth={1.5} />
-                  </Link>
-                ))}
+              <div className="mt-auto">
+                {/* Track order: the most useful link for anyone who has already ordered, so it stands out */}
+                <Link
+                  href={recentOrder ? `/order/${recentOrder.id}` : "/track-order"}
+                  onClick={close}
+                  className="group flex items-center gap-3.5 rounded-xl bg-ink p-4 text-canvas transition-colors hover:bg-ink-soft"
+                >
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-clay">
+                    <Package className="size-5" strokeWidth={1.5} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-medium">Track your order</span>
+                    <span className="block truncate text-xs text-canvas/70">
+                      {recentOrder ? `Order ${recentOrder.number}` : "Check delivery status"}
+                    </span>
+                  </span>
+                  <ArrowRight className="size-4 shrink-0 transition-transform group-hover:translate-x-0.5" strokeWidth={1.5} />
+                </Link>
+
+                <div className="mt-5 space-y-3 text-sm text-ink-soft">
+                  {[
+                    ["Wishlist", "/wishlist"],
+                    ["Contact us", "/contact"],
+                  ].map(([label, href]) => (
+                    <Link key={href} href={href} onClick={close} className="flex items-center justify-between py-1">
+                      {label}
+                      <ArrowUpRight className="size-4 text-stone" strokeWidth={1.5} />
+                    </Link>
+                  ))}
+                </div>
               </div>
             </nav>
           </div>,
