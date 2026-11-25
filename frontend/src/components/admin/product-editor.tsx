@@ -2,11 +2,15 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp, Check, ImagePlus, LoaderCircle, Plus, Rows3, Trash2, TriangleAlert } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, ImagePlus, Link2, LoaderCircle, Plus, Rows3, Trash2, TriangleAlert, UploadCloud } from "lucide-react";
 import { saveProduct } from "@/lib/admin/actions";
 import type { AdminCategory, AdminProduct } from "@/lib/admin/types";
 import { discountPercent, formatPrice } from "@/lib/format";
 import { Card, btn, inputCls } from "./ui";
+import { useUnsavedGuard } from "./use-unsaved-guard";
+import { DropZone, UploadBar, previewSrc } from "./photo-upload";
+import { checkPhoto, uploadPhoto } from "@/lib/admin/upload";
+import { useFeedback } from "@/components/ui/feedback";
 import { Select } from "@/components/ui/select";
 import { SuggestInput } from "@/components/ui/suggest-input";
 
@@ -96,8 +100,13 @@ export function ProductEditor({ product, categories }: { product?: AdminProduct;
   const [pending, start] = useTransition();
   const [newImage, setNewImage] = useState("");
   const [imageError, setImageError] = useState<string | null>(null);
+  /** Photos still uploading, with progress from 0 to 1 */
+  const [uploads, setUploads] = useState<{ id: string; name: string; progress: number }[]>([]);
+  const [showLink, setShowLink] = useState(false);
 
   const dirty = useMemo(() => snapshot(form) !== snapshot(initial), [form, initial]);
+  useUnsavedGuard(dirty && !pending);
+  const { toast } = useFeedback();
   const totalStock = form.variants.reduce((n, v) => n + (parseInt(v.stock) || 0), 0);
   const priceNum = parseFloat(form.price);
   const compareNum = parseFloat(form.compareAtPrice);
@@ -141,6 +150,32 @@ export function ProductEditor({ product, categories }: { product?: AdminProduct;
     set("images", [...form.images, { key: k(), url, alt: "" }]);
     setNewImage("");
     setImageError(null);
+  };
+  /** Upload several photos at once; they're added in the order they were chosen, whichever finishes first */
+  const onPhotoFiles = async (files: File[]) => {
+    setImageError(null);
+    const good = files.filter((file) => {
+      const problem = checkPhoto(file);
+      if (problem) setImageError(problem);
+      return !problem;
+    });
+    const jobs = good.map((file) => {
+      const id = k();
+      setUploads((u) => [...u, { id, name: file.name, progress: 0 }]);
+      const done = uploadPhoto(file, "products", (p) => setUploads((u) => u.map((x) => (x.id === id ? { ...x, progress: p } : x))));
+      return { id, done };
+    });
+    for (const { id, done } of jobs) {
+      try {
+        const url = await done;
+        setSaved(false);
+        setForm((f) => ({ ...f, images: [...f.images, { key: k(), url, alt: "" }] }));
+      } catch (e) {
+        setImageError((e as Error).message);
+      } finally {
+        setUploads((u) => u.filter((x) => x.id !== id));
+      }
+    }
   };
   const moveImage = (i: number, dir: -1 | 1) => {
     const next = [...form.images];
@@ -224,6 +259,7 @@ export function ProductEditor({ product, categories }: { product?: AdminProduct;
         return;
       }
       if (!product) {
+        toast(`${res.product.name} was created`);
         router.push(`/admin/products/${res.product.id}`);
         return;
       }
@@ -292,7 +328,7 @@ export function ProductEditor({ product, categories }: { product?: AdminProduct;
                   <li key={img.key} className="flex items-center gap-3 p-2.5">
                     <span className="relative h-20 w-15 shrink-0 overflow-hidden rounded bg-neutral-100">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={img.url} alt="" className="size-full object-cover" />
+                      <img src={previewSrc(img.url, 160)} alt="" className="size-full object-cover" />
                       {i === 0 && (
                         <span className="absolute inset-x-0 bottom-0 bg-neutral-900/80 py-0.5 text-center text-[0.6rem] font-medium text-white">
                           Cover
@@ -322,7 +358,47 @@ export function ProductEditor({ product, categories }: { product?: AdminProduct;
               </ul>
             )}
 
-            <div className="flex gap-2">
+            {uploads.length > 0 && (
+              <ul className="mb-3 space-y-2">
+                {uploads.map((u) => (
+                  <li key={u.id} className="flex items-center gap-3 rounded-md border border-neutral-200 px-3 py-2 text-xs text-neutral-600">
+                    <LoaderCircle className="size-3.5 shrink-0 animate-spin" />
+                    <span className="w-40 truncate">{u.name}</span>
+                    <span className="flex-1">
+                      <UploadBar value={u.progress} />
+                    </span>
+                    <span className="w-9 text-right tabular-nums">{Math.round(u.progress * 100)}%</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <DropZone multiple onFiles={onPhotoFiles}>
+              {({ over }) => (
+                <span
+                  className={`flex flex-col items-center justify-center gap-1.5 rounded-md border border-dashed px-4 py-6 text-center text-xs transition-colors ${
+                    over ? "border-neutral-900 bg-neutral-100" : "border-neutral-300 bg-neutral-50 hover:border-neutral-400"
+                  }`}
+                >
+                  <UploadCloud className="size-5 text-neutral-400" />
+                  <span className="text-neutral-500">
+                    <span className="font-medium text-neutral-900">Click to upload</span> or drag photos here
+                  </span>
+                  <span className="text-neutral-400">Several at once is fine. JPG, PNG or WebP, up to 10 MB each.</span>
+                </span>
+              )}
+            </DropZone>
+
+            <button
+              type="button"
+              onClick={() => setShowLink((s) => !s)}
+              aria-expanded={showLink}
+              className="mt-2 inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-xs text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+            >
+              <Link2 className="size-3.5" /> {showLink ? "Hide link" : "Add from a link instead"}
+            </button>
+
+            <div className={`mt-1 gap-2 ${showLink ? "flex" : "hidden"}`}>
               <input
                 value={newImage}
                 onChange={(e) => {
@@ -344,11 +420,9 @@ export function ProductEditor({ product, categories }: { product?: AdminProduct;
                 <ImagePlus className="size-4" /> Add
               </button>
             </div>
-            {imageError ? (
-              <p className="mt-1.5 text-xs text-red-600">{imageError}</p>
-            ) : (
-              <p className="mt-1.5 text-xs text-neutral-500">
-                Paste links from Unsplash or Cloudinary for now. Direct uploads will arrive once Cloudinary is connected.
+            {imageError && (
+              <p role="alert" className="mt-1.5 text-xs text-red-600">
+                {imageError}
               </p>
             )}
           </Card>
@@ -582,7 +656,13 @@ export function ProductEditor({ product, categories }: { product?: AdminProduct;
                 Discard
               </button>
             )}
-            <button type="button" disabled={pending || (!dirty && Boolean(product))} onClick={onSave} className={`${btn.base} ${btn.primary}`}>
+            <button
+              type="button"
+              disabled={pending || uploads.length > 0 || (!dirty && Boolean(product))}
+              title={uploads.length ? "Wait for the photos to finish uploading" : undefined}
+              onClick={onSave}
+              className={`${btn.base} ${btn.primary}`}
+            >
               {pending && <LoaderCircle className="size-4 animate-spin" />}
               {product ? "Save changes" : "Create product"}
             </button>

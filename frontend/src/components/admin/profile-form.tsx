@@ -6,6 +6,7 @@ import { Check, Eye, EyeOff, LoaderCircle } from "lucide-react";
 import { changePassword, updateProfile } from "@/lib/admin/actions";
 import type { Admin } from "@/lib/admin/types";
 import { Card, btn, inputCls } from "./ui";
+import { useUnsavedGuard } from "./use-unsaved-guard";
 
 const initials = (name: string) =>
   name
@@ -33,6 +34,7 @@ function Details({ admin }: { admin: Admin }) {
   const [done, setDone] = useState(false);
   const [pending, start] = useTransition();
   const dirty = form.name !== saved.name || form.email !== saved.email;
+  useUnsavedGuard(dirty && !pending);
 
   const save = (e: React.FormEvent) => {
     e.preventDefault();

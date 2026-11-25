@@ -7,6 +7,8 @@ import { savePromotion } from "@/lib/admin/actions";
 import type { AdminPromotion } from "@/lib/admin/types";
 import { Select } from "@/components/ui/select";
 import { pad, useCountdown } from "@/components/promo/countdown";
+import { useFeedback } from "@/components/ui/feedback";
+import { useUnsavedGuard } from "./use-unsaved-guard";
 import { Badge, Card, btn, inputCls } from "./ui";
 
 const IST = "Asia/Kolkata";
@@ -59,17 +61,19 @@ export function PromotionCard({ promotion }: { promotion: AdminPromotion | null 
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [pending, run] = useTransition();
+  const { confirm } = useFeedback();
 
   const endsAt = `${saved.date}T${saved.time}:${saved.time === "23:59" ? "59" : "00"}+05:30`;
   const t = useCountdown(endsAt);
   const running = saved.isActive && t !== null && !t.ended;
   const dirty = JSON.stringify(form) !== JSON.stringify(saved);
+  useUnsavedGuard(dirty && !pending);
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => {
     setForm((f) => ({ ...f, [k]: v }));
     setDone(false);
   };
 
-  const onSave = () => {
+  const onSave = async () => {
     setError(null);
     setErrors({});
     const pct = Number(form.percentOff);
@@ -86,6 +90,27 @@ export function PromotionCard({ promotion }: { promotion: AdminPromotion | null 
     if (payload.isActive && new Date(payload.endsAt) <= new Date()) {
       setErrors({ endsAt: "This time has already passed. Choose a later end." });
       return;
+    }
+    // Prices change across the whole store, so ask when the offer starts, changes % or ends early
+    const starting = payload.isActive && (!running || String(pct) !== saved.percentOff);
+    const ending = !payload.isActive && running;
+    if (starting || ending) {
+      const ends = `${dayLabel.format(new Date(`${form.date}T00:00:00Z`))}, ${timeLabel(form.time)}`;
+      const ok = await confirm(
+        starting
+          ? {
+              title: `Start ${pct}% off everything?`,
+              body: `Every price in the store drops by ${pct}% straight away, until ${ends}.`,
+              confirmLabel: "Start offer",
+            }
+          : {
+              title: "End the offer now?",
+              body: "Every price in the store goes back to full price straight away.",
+              confirmLabel: "End offer",
+              danger: true,
+            },
+      );
+      if (!ok) return;
     }
     run(async () => {
       const res = await savePromotion(payload);

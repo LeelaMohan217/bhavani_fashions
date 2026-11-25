@@ -12,7 +12,7 @@ type CartContextValue = {
   openDrawer: () => void;
   closeDrawer: () => void;
   /** Each mutation resolves to an error message, or null on success */
-  add: (variantId: string, quantity?: number) => Promise<string | null>;
+  add: (variantId: string, quantity?: number, options?: { openDrawer?: boolean }) => Promise<string | null>;
   setQuantity: (itemId: string, quantity: number) => Promise<string | null>;
   remove: (itemId: string) => Promise<string | null>;
   refresh: () => Promise<void>;
@@ -47,11 +47,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const add = useCallback(async (variantId: string, quantity = 1) => {
+  const add = useCallback(async (variantId: string, quantity = 1, options?: { openDrawer?: boolean }) => {
     const res = await addToCart(variantId, quantity);
     if (!res.ok) return res.error;
     setCart(res.cart);
-    setDrawerOpen(true);
+    if (options?.openDrawer !== false) setDrawerOpen(true);
     return null;
   }, []);
 

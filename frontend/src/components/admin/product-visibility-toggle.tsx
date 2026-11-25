@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, LoaderCircle } from "lucide-react";
 import { setProductActive } from "@/lib/admin/actions";
+import { useFeedback } from "@/components/ui/feedback";
 import { rowAction } from "./ui";
 
 /** Hide/show a product on the storefront ("delete" is hide-only by design). */
@@ -11,6 +12,7 @@ export function ProductVisibilityToggle({ id, isActive, name }: { id: string; is
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useFeedback();
 
   // Our own error bubble instead of the browser's alert(); clears itself after a few seconds
   useEffect(() => {
@@ -28,8 +30,20 @@ export function ProductVisibilityToggle({ id, isActive, name }: { id: string; is
           start(async () => {
             setError(null);
             const res = await setProductActive(id, !isActive);
-            if (res.ok) router.refresh();
-            else setError(res.error);
+            if (res.ok) {
+              toast(isActive ? `${name} is hidden from the store` : `${name} is showing in the store`, {
+                action: {
+                  label: "Undo",
+                  onClick: () =>
+                    start(async () => {
+                      const undo = await setProductActive(id, isActive);
+                      if (undo.ok) router.refresh();
+                      else setError(undo.error);
+                    }),
+                },
+              });
+              router.refresh();
+            } else setError(res.error);
           })
         }
         aria-label={isActive ? `Hide ${name} from the store` : `Show ${name} in the store`}

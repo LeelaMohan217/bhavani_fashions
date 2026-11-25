@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { CartItem } from "@/lib/types";
 import { formatPrice } from "@/lib/format";
+import { useFeedback } from "@/components/ui/feedback";
 import { useCart } from "./cart-provider";
 import { QuantityStepper } from "./quantity-stepper";
 
@@ -17,13 +18,30 @@ export function CartLine({
   onNavigate?: () => void;
   variant?: "drawer" | "page";
 }) {
-  const { setQuantity, remove } = useCart();
+  const { setQuantity, remove, add } = useCart();
+  const { toast } = useFeedback();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
   const run = (fn: () => Promise<string | null>) =>
     startTransition(async () => {
       setError(await fn());
+    });
+
+  const onRemove = () =>
+    startTransition(async () => {
+      const err = await remove(item.id);
+      if (err) return setError(err);
+      const { variantId, quantity, productName } = item;
+      toast(`${productName} removed`, {
+        action: {
+          label: "Undo",
+          onClick: async () => {
+            const undoErr = await add(variantId, quantity, { openDrawer: false });
+            if (undoErr) toast(undoErr, { error: true });
+          },
+        },
+      });
     });
 
   const href = `/products/${item.productSlug}`;
@@ -83,7 +101,7 @@ export function CartLine({
           <button
             type="button"
             disabled={pending}
-            onClick={() => run(() => remove(item.id))}
+            onClick={onRemove}
             className="eyebrow link-draw pb-0.5 text-[0.6rem] text-stone hover:text-ink"
           >
             Remove

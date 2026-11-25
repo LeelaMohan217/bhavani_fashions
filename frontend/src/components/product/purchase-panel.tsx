@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { Check, LoaderCircle, Minus, Plus, ShoppingBag } from "lucide-react";
 import type { ProductCard, ProductVariant } from "@/lib/types";
 import { WishlistTextButton } from "../wishlist-button";
@@ -33,6 +33,13 @@ export function PurchasePanel({ product, variants }: { product: ProductCard; var
 
   const { add } = useCart();
   const [adding, startAdding] = useTransition();
+  // Brief "Added" tick on the button after a successful add
+  const [added, setAdded] = useState(false);
+  useEffect(() => {
+    if (!added) return;
+    const t = window.setTimeout(() => setAdded(false), 1800);
+    return () => window.clearTimeout(t);
+  }, [added]);
 
   const addToBag = () => {
     if (sized && !selected) {
@@ -44,7 +51,10 @@ export function PurchasePanel({ product, variants }: { product: ProductCard; var
     startAdding(async () => {
       const error = await add(selected.id, qty);
       if (error) setNotice(error);
-      else setQty(1);
+      else {
+        setQty(1);
+        setAdded(true);
+      }
     });
   };
 
@@ -160,10 +170,12 @@ export function PurchasePanel({ product, variants }: { product: ProductCard; var
         >
           {adding ? (
             <LoaderCircle className="size-4 animate-spin" strokeWidth={1.5} />
+          ) : added ? (
+            <Check className="size-4 animate-pop" strokeWidth={1.75} />
           ) : (
             <ShoppingBag className="size-4" strokeWidth={1.5} />
           )}
-          {soldOut ? "Sold out" : adding ? "Adding…" : "Add to bag"}
+          {soldOut ? "Sold out" : adding ? "Adding…" : added ? "Added to bag" : "Add to bag"}
         </button>
       </div>
 

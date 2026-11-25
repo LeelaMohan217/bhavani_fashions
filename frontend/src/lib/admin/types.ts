@@ -351,7 +351,7 @@ export type CouponPayload = {
 
 // ─── Activity log ────────────────────────────────────────────────────────────
 
-export const ACTIVITY_AREAS = ["order", "product", "category", "banner", "coupon", "offer", "account", "profile"] as const;
+export const ACTIVITY_AREAS = ["order", "product", "category", "banner", "navigation", "coupon", "offer", "account", "profile"] as const;
 export type ActivityArea = (typeof ACTIVITY_AREAS)[number];
 
 export type ActivityList = {
@@ -361,3 +361,20 @@ export type ActivityList = {
   totalPages: number;
   admins: { id: string; name: string }[];
 };
+// ─── Navigation (header and footer menus) ─────────────────────────────────────
+
+export type NavMenuKey = "header" | "footer";
+export type NavLinkKind = "CATEGORY" | "LINK" | "NONE";
+
+/** One menu item as the admin edits it */
+export type AdminNavItem = {
+  label: string;
+  kind: NavLinkKind;
+  categoryId: string | null;
+  href: string | null;
+  badge: string | null;
+  isActive: boolean;
+  children: AdminNavItem[];
+};
+
+export type AdminNavMenu = { items: AdminNavItem[]; custom: boolean };

@@ -56,20 +56,20 @@ export function CartDrawer() {
             </span>
             <p className="display mt-6 text-3xl">Your bag is empty</p>
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-stone">
-              Handwoven pieces, waiting to be worn. Start with our sarees.
+              Handwoven pieces, waiting to be worn.
             </p>
             <Link
-              href="/shop/sarees"
+              href="/shop"
               onClick={closeDrawer}
               className="eyebrow group mt-8 inline-flex items-center gap-3 bg-ink px-7 py-4 text-canvas transition-colors hover:bg-clay-deep"
             >
-              Explore sarees
+              Start shopping
               <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" strokeWidth={1.5} />
             </Link>
           </div>
         ) : (
           <>
-            <ul className="flex-1 divide-y divide-line overflow-y-auto px-6">
+            <ul className="flex-1 divide-y divide-line overflow-y-auto overscroll-contain px-6">
               {items.map((item) => (
                 <CartLine key={item.id} item={item} onNavigate={closeDrawer} />
               ))}

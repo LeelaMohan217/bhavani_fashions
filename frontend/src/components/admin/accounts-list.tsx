@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Check, Eye, EyeOff, KeyRound, LoaderCircle, Plus, Trash2, TriangleAlert, X } from "lucide-react";
 import { createAdmin, deleteAdmin, resetAdminPassword, setAdminActive } from "@/lib/admin/actions";
 import type { AdminAccount } from "@/lib/admin/types";
+import { useFeedback } from "@/components/ui/feedback";
 import { Badge, Card, btn, inputCls, rowAction, td, th } from "./ui";
 
 const initials = (name: string) =>
@@ -33,11 +34,12 @@ export function AccountsList({ accounts: initial }: { accounts: AdminAccount[] }
   const [accounts, setAccounts] = useState(initial);
   const [adding, setAdding] = useState(false);
   const [resetting, setResetting] = useState<string | null>(null);
-  const [confirming, setConfirming] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
   const [pending, start] = useTransition();
+  const { confirm, toast } = useFeedback();
 
-  const run = (action: () => Promise<{ ok: boolean; error?: string }>, done: string, after?: () => void) => {
+  /** Short results show as a toast; ones with instructions stay as a note above the table */
+  const run = (action: () => Promise<{ ok: boolean; error?: string }>, done: string, after?: () => void, asToast = false) => {
     setNotice(null);
     start(async () => {
       const res = await action();
@@ -46,21 +48,39 @@ export function AccountsList({ accounts: initial }: { accounts: AdminAccount[] }
         return;
       }
       after?.();
-      setNotice({ tone: "ok", text: done });
+      if (asToast) toast(done);
+      else setNotice({ tone: "ok", text: done });
       router.refresh();
     });
   };
 
-  const toggle = (a: AdminAccount) =>
+  const toggle = async (a: AdminAccount) => {
+    if (a.isActive) {
+      const ok = await confirm({
+        title: `Turn off sign-in for ${a.name}?`,
+        body: "They'll be signed out everywhere and can't sign in until you turn it back on.",
+        confirmLabel: "Turn off",
+        danger: true,
+      });
+      if (!ok) return;
+    }
     run(
       () => setAdminActive(a.id, !a.isActive),
-      a.isActive ? `${a.name} can no longer sign in.` : `${a.name} can sign in again.`,
+      a.isActive ? `${a.name} can no longer sign in` : `${a.name} can sign in again`,
       () => setAccounts((list) => list.map((x) => (x.id === a.id ? { ...x, isActive: !a.isActive } : x))),
+      true,
     );
+  };
 
-  const remove = (a: AdminAccount) => {
-    setConfirming(null);
-    run(() => deleteAdmin(a.id), `${a.name} was removed.`, () => setAccounts((list) => list.filter((x) => x.id !== a.id)));
+  const remove = async (a: AdminAccount) => {
+    const ok = await confirm({
+      title: `Remove ${a.name}?`,
+      body: `${a.email} will lose access to the admin for good. This can't be undone.`,
+      confirmLabel: "Remove",
+      danger: true,
+    });
+    if (!ok) return;
+    run(() => deleteAdmin(a.id), `${a.name} was removed`, () => setAccounts((list) => list.filter((x) => x.id !== a.id)), true);
   };
 
   return (
@@ -157,17 +177,6 @@ export function AccountsList({ accounts: initial }: { accounts: AdminAccount[] }
                     <td className={`${td} text-neutral-600`}>{timeAgo(a.lastLoginAt)}</td>
                     <td className={`${td} text-neutral-600`}>{dateFmt.format(new Date(a.createdAt))}</td>
                     <td className={`${td} text-right`}>
-                      {confirming === a.id ? (
-                        <span className="inline-flex items-center gap-2 text-xs">
-                          <span className="text-neutral-600">Remove {a.name.split(" ")[0]}?</span>
-                          <button type="button" onClick={() => remove(a)} className="rounded px-2 py-1 font-medium text-red-600 hover:bg-red-50">
-                            Yes
-                          </button>
-                          <button type="button" onClick={() => setConfirming(null)} className="rounded px-2 py-1 text-neutral-500 hover:bg-neutral-100">
-                            No
-                          </button>
-                        </span>
-                      ) : (
                         <span className="inline-flex items-center gap-0.5">
                           <button
                             type="button"
@@ -181,7 +190,7 @@ export function AccountsList({ accounts: initial }: { accounts: AdminAccount[] }
                           <button
                             type="button"
                             disabled={pending || a.isYou}
-                            onClick={() => setConfirming(a.id)}
+                            onClick={() => remove(a)}
                             aria-label={`Remove ${a.name}`}
                             title={a.isYou ? "You can't delete your own account" : "Remove admin"}
                             className={`${rowAction} hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30`}
@@ -189,7 +198,6 @@ export function AccountsList({ accounts: initial }: { accounts: AdminAccount[] }
                             <Trash2 className="size-4" />
                           </button>
                         </span>
-                      )}
                     </td>
                   </tr>
                   {resetting === a.id && (

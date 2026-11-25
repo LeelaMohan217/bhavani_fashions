@@ -194,3 +194,8 @@ export type OrderDetail = {
 export type ActionResult<T> =
   | ({ ok: true } & T)
   | { ok: false; error: string; fieldErrors?: Record<string, string> };
+
+/** One link in the store's header or footer menu (Admin → Navigation) */
+export type NavNode = { id: string; label: string; href: string | null; badge: string | null; children: NavNode[] };
+/** A menu as the store draws it; `custom` is false while it still follows the categories automatically */
+export type NavMenu = { items: NavNode[]; custom: boolean };

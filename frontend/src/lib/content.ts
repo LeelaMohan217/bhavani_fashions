@@ -4,13 +4,7 @@
 const unsplash = (id: string) =>
   `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=1800&q=80`;
 
-export const NAV_LINKS = [
-  { label: "Sarees", href: "/shop/sarees" },
-  { label: "Lehengas", href: "/shop/lehengas" },
-  { label: "Kurta Sets", href: "/shop/kurta-sets" },
-  { label: "New In", href: "/shop?filter=new" },
-  { label: "Sale", href: "/shop?filter=sale" },
-] as const;
+// Category links in the header, phone menu and footer come from Admin → Categories (see lib/nav.ts).
 
 /** "Shop by occasion" (matches each product's Occasion in Admin). Links go to /shop?occasion=… */
 export const OCCASIONS = ["Wedding", "Festive", "Party", "Birthday", "Sangeet", "Haldi", "Everyday", "Work"] as const;

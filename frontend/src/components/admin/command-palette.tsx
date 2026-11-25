@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
+import { lockPageScroll } from "@/lib/scroll-lock";
 import {
   ArrowDown,
   ArrowUp,
@@ -10,6 +11,7 @@ import {
   ExternalLink,
   FolderTree,
   GalleryHorizontalEnd,
+  PanelTop,
   History,
   LifeBuoy,
   PackageCheck,
@@ -47,18 +49,6 @@ function saveRecent(list: RecentSearch[]) {
 
 const searchHref = (scope: Scope, term: string) => `/admin/${scope}?search=${encodeURIComponent(term)}`;
 
-/** Stops the page behind the palette from scrolling (pads for the scrollbar). */
-function lockPageScroll() {
-  const html = document.documentElement;
-  const scrollbar = window.innerWidth - html.clientWidth;
-  const prev = { overflow: html.style.overflow, paddingRight: html.style.paddingRight };
-  html.style.overflow = "hidden";
-  if (scrollbar > 0) html.style.paddingRight = `${scrollbar}px`;
-  return () => {
-    html.style.overflow = prev.overflow;
-    html.style.paddingRight = prev.paddingRight;
-  };
-}
 
 type Item = {
   id: string;
@@ -101,7 +91,7 @@ export function CommandPalette({ toFulfil }: { toFulfil: number }) {
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
         aria-label="Search orders, products, pages and actions"
-        className="group relative flex h-9 min-w-0 flex-1 items-center gap-2 rounded-md border border-neutral-200 bg-neutral-50 pl-2.5 pr-2 text-left text-sm text-neutral-400 transition-colors hover:border-neutral-300 hover:bg-white sm:max-w-sm xl:max-w-[calc(50%-0.5rem)]"
+        className="group relative flex h-9 min-w-0 flex-1 items-center gap-2 rounded-md border border-neutral-200 bg-neutral-50 pl-2.5 pr-2 text-left text-sm text-neutral-400 transition-colors hover:border-neutral-300 hover:bg-white md:max-w-sm xl:max-w-[calc(50%-0.5rem)]"
       >
         <Search className="size-4 shrink-0" />
         <span className="flex-1 truncate">Search…</span>
@@ -227,6 +217,7 @@ function Palette({ toFulfil, onClose }: { toFulfil: number; onClose: () => void 
       { id: "p-insights", icon: TrendingUp, title: "Best sellers", subtitle: "Top products this month, last month and all time", keywords: "best sellers top selling products insights report analytics sales popular", run: () => go("/admin/insights") },
       { id: "p-categories", icon: FolderTree, title: "Categories", subtitle: "Categories and subcategories", keywords: "categories subcategories sarees lehengas kurta sets groups types collections", run: () => go("/admin/categories") },
       { id: "p-banners", icon: GalleryHorizontalEnd, title: "Banners & offers", subtitle: "Home-page banners and store-wide sales", keywords: "banners home page offers slideshow hero promotions black friday sale discount", run: () => go("/admin/banners") },
+      { id: "p-navigation", icon: PanelTop, title: "Navigation", subtitle: "Header and footer menus", keywords: "navigation navbar menu header footer links dropdown sidebar", run: () => go("/admin/navigation") },
       { id: "p-settings", icon: Settings, title: "Settings", subtitle: "Payments, shipping and your account", keywords: "settings payments razorpay shipping account cod", run: () => go("/admin/settings") },
       { id: "p-help", icon: LifeBuoy, title: "Help & Support", subtitle: "Guides and keyboard shortcuts", keywords: "help support guides shortcuts faq", run: () => go("/admin/help") },
     ];

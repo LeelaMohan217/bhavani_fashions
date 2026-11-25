@@ -106,7 +106,7 @@ export async function ProductListing({
         <aside className="hidden lg:block" aria-label="Filters">
           {/* Soft sand panel; scrolls inside if taller than the screen, with no visible scrollbar
               (a hover-only scrollbar would push the icons and counts sideways) */}
-          <div className="sticky top-24 max-h-[calc(100svh-7rem)] overflow-y-auto rounded-xl bg-sand px-5 pb-3 pt-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="sticky top-24 max-h-[calc(100svh-7rem)] overflow-y-auto overscroll-contain rounded-xl bg-sand px-5 pb-3 pt-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <ShopSidebar filters={filters} selection={selection} filter={keepFilter} sort={sort} />
           </div>
         </aside>

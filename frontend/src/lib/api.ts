@@ -4,6 +4,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import type {
   Banner,
   Category,
+  NavMenu,
   Promotion,
   CheckoutConfig,
   OrderDetail,
@@ -136,6 +137,17 @@ export async function getBanners(): Promise<Banner[]> {
   cacheLife("minutes");
   cacheTag("banners");
   return get<Banner[]>("/api/banners");
+}
+
+/**
+ * The header or footer menu. Refreshed straight away when the menu is saved ("navigation") or a
+ * category changes ("catalogue"), since menus link to categories and follow them until customised.
+ */
+export async function getNavigation(menu: "header" | "footer"): Promise<NavMenu> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("navigation", "catalogue");
+  return get<NavMenu>(`/api/navigation/${menu}`);
 }
 
 /** The store-wide offer running now (e.g. Black Friday), or null. Shoppers' pages hide it at endsAt. */

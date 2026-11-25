@@ -18,7 +18,8 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
-    "admin:create": "tsx scripts/create-admin.ts"
+    "admin:create": "tsx scripts/create-admin.ts",
+    "store:reset": "tsx scripts/reset-store.ts"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.2",

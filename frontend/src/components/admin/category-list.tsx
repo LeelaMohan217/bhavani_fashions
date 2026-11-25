@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUp, CornerDownRight, FolderTree, Pencil, Plus, Trash2, TriangleAlert } from "lucide-react";
 import { deleteCategory, reorderCategories, setCategoryActive } from "@/lib/admin/actions";
 import type { AdminCategory } from "@/lib/admin/types";
+import { useFeedback } from "@/components/ui/feedback";
 import { Card, EmptyState, btn, rowAction, td, th } from "./ui";
 
 /** Categories as a table: show/hide, order, edit and delete. Changes save straight away. */
@@ -13,14 +14,14 @@ export function CategoryList({ categories: initial }: { categories: AdminCategor
   const router = useRouter();
   const [categories, setCategories] = useState(initial);
   const [error, setError] = useState<string | null>(null);
-  const [confirming, setConfirming] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  const { confirm, toast } = useFeedback();
 
   const parents = categories.filter((c) => !c.parentId);
   const childrenOf = (id: string) => categories.filter((c) => c.parentId === id);
 
   /** Run a change optimistically; put things back if the server says no */
-  const save = (next: AdminCategory[], action: () => Promise<{ ok: boolean; error?: string }>) => {
+  const save = (next: AdminCategory[], action: () => Promise<{ ok: boolean; error?: string }>, done?: string) => {
     const before = categories;
     setCategories(next);
     setError(null);
@@ -29,7 +30,10 @@ export function CategoryList({ categories: initial }: { categories: AdminCategor
       if (!res.ok) {
         setCategories(before);
         setError(res.error ?? "Couldn't save. Please try again.");
-      } else router.refresh();
+      } else {
+        if (done) toast(done);
+        router.refresh();
+      }
     });
   };
 
@@ -50,13 +54,21 @@ export function CategoryList({ categories: initial }: { categories: AdminCategor
     save(
       categories.map((x) => (x.id === c.id ? { ...x, isActive: !c.isActive } : x)),
       () => setCategoryActive(c.id, !c.isActive),
+      c.isActive ? `${c.name} is hidden from the store` : `${c.name} is showing in the store`,
     );
 
-  const remove = (c: AdminCategory) => {
-    setConfirming(null);
+  const remove = async (c: AdminCategory) => {
+    const ok = await confirm({
+      title: `Delete ${c.name}?`,
+      body: "It will be removed for good. This can't be undone.",
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!ok) return;
     save(
       categories.filter((x) => x.id !== c.id),
       () => deleteCategory(c.id),
+      `${c.name} was deleted`,
     );
   };
 
@@ -131,33 +143,21 @@ export function CategoryList({ categories: initial }: { categories: AdminCategor
           </div>
         </td>
         <td className={`${td} text-right`}>
-          {confirming === c.id ? (
-            <span className="inline-flex items-center gap-2 text-xs">
-              <span className="text-neutral-600">Delete for good?</span>
-              <button type="button" onClick={() => remove(c)} className="rounded px-2 py-1 font-medium text-red-600 hover:bg-red-50">
-                Yes
-              </button>
-              <button type="button" onClick={() => setConfirming(null)} className="rounded px-2 py-1 text-neutral-500 hover:bg-neutral-100">
-                No
-              </button>
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-0.5">
-              <Link href={`/admin/categories/${c.id}`} aria-label={`Edit ${c.name}`} title="Edit" className={rowAction}>
-                <Pencil className="size-4" />
-              </Link>
-              <button
-                type="button"
-                disabled={pending || Boolean(blocked)}
-                onClick={() => setConfirming(c.id)}
-                aria-label={`Delete ${c.name}`}
-                title={blocked ?? "Delete"}
-                className={`${rowAction} hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30`}
-              >
-                <Trash2 className="size-4" />
-              </button>
-            </span>
-          )}
+          <span className="inline-flex items-center gap-0.5">
+            <Link href={`/admin/categories/${c.id}`} aria-label={`Edit ${c.name}`} title="Edit" className={rowAction}>
+              <Pencil className="size-4" />
+            </Link>
+            <button
+              type="button"
+              disabled={pending || Boolean(blocked)}
+              onClick={() => remove(c)}
+              aria-label={`Delete ${c.name}`}
+              title={blocked ?? "Delete"}
+              className={`${rowAction} hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30`}
+            >
+              <Trash2 className="size-4" />
+            </button>
+          </span>
         </td>
       </tr>
     );

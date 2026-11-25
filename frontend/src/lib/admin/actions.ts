@@ -10,6 +10,9 @@ import type {
   AdminBanner,
   AdminCategory,
   AdminCategoryDetail,
+  AdminNavItem,
+  AdminNavMenu,
+  NavMenuKey,
   AdminOrder,
   AdminProduct,
   AdminPromotion,
@@ -231,6 +234,39 @@ export async function reorderCategories(ids: string[]): Promise<ActionResult<{ c
     const categories = await adminFetch<AdminCategory[]>("/categories/order", { method: "PUT", body: { ids } });
     updateTag("catalogue");
     return { ok: true, categories };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+// ─── Photo uploads ───────────────────────────────────────────────────────────
+// The browser uploads straight to Cloudinary with a one-off signature from the backend.
+
+export type UploadTicket = {
+  uploadUrl: string;
+  apiKey: string;
+  signature: string;
+  params: Record<string, string>;
+  maxBytes: number;
+};
+
+export async function getUploadTicket(area: "products" | "categories" | "banners"): Promise<ActionResult<{ ticket: UploadTicket }>> {
+  try {
+    const ticket = await adminFetch<UploadTicket>("/uploads/sign", { method: "POST", body: { area } });
+    return { ok: true, ticket };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+// ─── Header and footer menus ─────────────────────────────────────────────────
+// Saving refreshes the store's menus straight away. An empty list goes back to the automatic menu.
+
+export async function saveNavigation(menu: NavMenuKey, items: AdminNavItem[]): Promise<ActionResult<{ menu: AdminNavMenu }>> {
+  try {
+    const saved = await adminFetch<AdminNavMenu>(`/navigation/${menu}`, { method: "PUT", body: { items } });
+    updateTag("navigation");
+    return { ok: true, menu: saved };
   } catch (e) {
     return fail(e);
   }

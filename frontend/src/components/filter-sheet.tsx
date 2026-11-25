@@ -97,7 +97,7 @@ export function FilterSheet({
                 </button>
               </div>
 
-              <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-4">
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-4">
                 <fieldset className="mt-2">
                   <legend className="eyebrow text-stone">Sort by</legend>
                   <ul className="mt-1">

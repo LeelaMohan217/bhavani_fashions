@@ -6,7 +6,9 @@ import { Check, LoaderCircle, Trash2, TriangleAlert } from "lucide-react";
 import { deleteCoupon, saveCoupon } from "@/lib/admin/actions";
 import type { AdminCoupon, CouponPayload, CouponType } from "@/lib/admin/types";
 import { Select } from "@/components/ui/select";
+import { useFeedback } from "@/components/ui/feedback";
 import { Card, btn, inputCls } from "./ui";
+import { useUnsavedGuard } from "./use-unsaved-guard";
 
 /** Form state: money in rupees and dates as yyyy-mm-dd, as typed */
 type Form = {
@@ -65,10 +67,11 @@ export function CouponEditor({ coupon }: { coupon?: AdminCoupon }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const [pending, start] = useTransition();
+  const { confirm, toast } = useFeedback();
 
   const dirty = JSON.stringify(form) !== JSON.stringify(initial);
+  useUnsavedGuard(dirty && !pending);
   const used = coupon?.usedCount ?? 0;
 
   const set = <K extends keyof Form>(key: K, value: Form[K]) => {
@@ -98,24 +101,33 @@ export function CouponEditor({ coupon }: { coupon?: AdminCoupon }) {
         setSaved(true);
         router.refresh();
       } else {
+        toast(`${form.code.trim()} was created`);
         router.push("/admin/coupons");
         router.refresh();
       }
     });
   };
 
-  const onDelete = () =>
+  const onDelete = async () => {
+    if (!coupon) return;
+    const ok = await confirm({
+      title: `Delete ${coupon.code}?`,
+      body: "Shoppers won't be able to use this code. This can't be undone.",
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!ok) return;
     start(async () => {
-      if (!coupon) return;
       const res = await deleteCoupon(coupon.id);
       if (!res.ok) {
         setFormError(res.error);
-        setConfirmDelete(false);
         return;
       }
+      toast(`${coupon.code} was deleted`);
       router.push("/admin/coupons");
       router.refresh();
     });
+  };
 
   const input = (key: Exclude<keyof Form, "type" | "isActive">, errKey: string = key) => ({
     id: key,
@@ -243,18 +255,8 @@ export function CouponEditor({ coupon }: { coupon?: AdminCoupon }) {
           <Card bodyClassName="p-4">
             {used > 0 ? (
               <p className="text-sm text-neutral-600">This code has been used on orders, so it can&rsquo;t be deleted. Switch it off instead.</p>
-            ) : confirmDelete ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm text-neutral-700">Delete {coupon.code} for good?</span>
-                <button type="button" disabled={pending} onClick={onDelete} className={`${btn.base} ${btn.danger}`}>
-                  {pending ? <LoaderCircle className="size-4 animate-spin" /> : <Trash2 className="size-4" />} Yes, delete
-                </button>
-                <button type="button" onClick={() => setConfirmDelete(false)} className={`${btn.base} ${btn.ghost}`}>
-                  Keep it
-                </button>
-              </div>
             ) : (
-              <button type="button" onClick={() => setConfirmDelete(true)} className={`${btn.base} ${btn.danger}`}>
+              <button type="button" disabled={pending} onClick={onDelete} className={`${btn.base} ${btn.danger}`}>
                 <Trash2 className="size-4" /> Delete code
               </button>
             )}

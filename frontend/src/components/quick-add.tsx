@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { LoaderCircle, ShoppingBag, X } from "lucide-react";
+import { Check, LoaderCircle, ShoppingBag, X } from "lucide-react";
 import type { ProductCard } from "@/lib/types";
 import { useCart } from "./cart/cart-provider";
 
@@ -26,6 +26,12 @@ export function QuickAdd({ product }: { product: ProductCard }) {
   const firstInStock = options.find((o) => o.stock > 0);
   const [colour, setColour] = useState(firstInStock?.color);
   const panel = useRef<HTMLDivElement>(null);
+  const [added, setAdded] = useState(false);
+  useEffect(() => {
+    if (!added) return;
+    const t = window.setTimeout(() => setAdded(false), 1800);
+    return () => window.clearTimeout(t);
+  }, [added]);
 
   // Close the picker on Escape or a press outside it
   useEffect(() => {
@@ -45,7 +51,10 @@ export function QuickAdd({ product }: { product: ProductCard }) {
     startTransition(async () => {
       const err = await add(id, 1);
       if (err) setError(err);
-      else setOpen(false);
+      else {
+        setOpen(false);
+        setAdded(true);
+      }
     });
   };
 
@@ -143,8 +152,14 @@ export function QuickAdd({ product }: { product: ProductCard }) {
         onClick={() => (needsChoice ? setOpen((o) => !o) : addOption(firstInStock.id))}
         className={button}
       >
-        {pending && !open ? <LoaderCircle className="size-3.5 animate-spin" strokeWidth={1.5} /> : <ShoppingBag className="size-3.5" strokeWidth={1.5} />}
-        {pending && !open ? "Adding…" : "Add to bag"}
+        {pending && !open ? (
+          <LoaderCircle className="size-3.5 animate-spin" strokeWidth={1.5} />
+        ) : added ? (
+          <Check className="size-3.5 animate-pop" strokeWidth={1.75} />
+        ) : (
+          <ShoppingBag className="size-3.5" strokeWidth={1.5} />
+        )}
+        {pending && !open ? "Adding…" : added ? "Added" : "Add to bag"}
       </button>
       {error && !open && <p className="mt-1.5 text-xs text-clay">{error}</p>}
     </div>

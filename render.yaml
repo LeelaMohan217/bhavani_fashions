@@ -25,3 +25,5 @@ services:
         sync: false
       - key: RAZORPAY_WEBHOOK_SECRET # same secret as the webhook in Razorpay → Settings → Webhooks
         sync: false
+      - key: CLOUDINARY_URL # photo uploads: cloudinary://<api key>:<api secret>@<cloud name>
+        sync: false

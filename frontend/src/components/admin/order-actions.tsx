@@ -7,6 +7,7 @@ import { markRefunded, updateOrderStatus } from "@/lib/admin/actions";
 import type { AdminOrder } from "@/lib/admin/types";
 import type { OrderStatus } from "@/lib/types";
 import { formatPrice } from "@/lib/format";
+import { useFeedback } from "@/components/ui/feedback";
 import { btn, inputCls } from "./ui";
 import { Select } from "@/components/ui/select";
 
@@ -23,14 +24,14 @@ export function OrderActions({ order }: { order: AdminOrder }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [shipping, setShipping] = useState(false);
-  const [confirmCancel, setConfirmCancel] = useState(false);
   const [courier, setCourier] = useState(COURIERS[0]);
   const [tracking, setTracking] = useState("");
+  const { confirm, toast } = useFeedback();
 
   const can = (s: OrderStatus) => order.allowedTransitions.includes(s);
   const step = NEXT_STEP[order.status];
 
-  const run = (fn: () => Promise<{ ok: boolean; error?: string }>) =>
+  const run = (fn: () => Promise<{ ok: boolean; error?: string }>, done: string) =>
     start(async () => {
       setError(null);
       const res = await fn();
@@ -39,9 +40,47 @@ export function OrderActions({ order }: { order: AdminOrder }) {
         return;
       }
       setShipping(false);
-      setConfirmCancel(false);
+      toast(done);
       router.refresh();
     });
+
+  const onDelivered = async () => {
+    const cod = order.paymentStatus === "COD_DUE";
+    const ok = await confirm({
+      title: "Mark this order delivered?",
+      body: cod
+        ? `Only do this once the courier confirms delivery and the ${formatPrice(order.total)} cash has been collected. It can't be changed back.`
+        : "Only do this once the courier confirms delivery. It can't be changed back.",
+      confirmLabel: "Mark delivered",
+    });
+    if (ok) run(() => updateOrderStatus(order.id, { status: "DELIVERED" }), "Order marked delivered");
+  };
+
+  const onRefunded = async () => {
+    const ok = await confirm({
+      title: `Record a ${formatPrice(order.total)} refund?`,
+      body: "Only do this after the refund has been issued in the Razorpay dashboard. This only records it; no money is sent from here.",
+      confirmLabel: "Mark refunded",
+    });
+    if (ok) run(() => markRefunded(order.id), "Refund recorded");
+  };
+
+  const onCancel = async () => {
+    const ok = await confirm({
+      title: "Cancel this order?",
+      body: (
+        <>
+          {order.status !== "PENDING_PAYMENT" && "The pieces will go back into stock. "}
+          {order.paymentStatus === "PAID" && "The customer will need a refund. "}
+          This can&rsquo;t be undone.
+        </>
+      ),
+      confirmLabel: "Cancel order",
+      cancelLabel: "Keep order",
+      danger: true,
+    });
+    if (ok) run(() => updateOrderStatus(order.id, { status: "CANCELLED" }), "Order cancelled");
+  };
 
   const refundDue = order.paymentStatus === "REFUND_DUE";
   if (!step && !refundDue && !can("CANCELLED")) return null;
@@ -56,7 +95,7 @@ export function OrderActions({ order }: { order: AdminOrder }) {
               Issue it from the Razorpay dashboard{order.razorpayPaymentId && ` (payment ${order.razorpayPaymentId})`}, then record it here.
             </p>
           </div>
-          <button type="button" disabled={pending} onClick={() => run(() => markRefunded(order.id))} className={`${btn.base} ${btn.secondary}`}>
+          <button type="button" disabled={pending} onClick={onRefunded} className={`${btn.base} ${btn.secondary}`}>
             Mark refunded
           </button>
         </div>
@@ -75,7 +114,7 @@ export function OrderActions({ order }: { order: AdminOrder }) {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                run(() => updateOrderStatus(order.id, { status: "SHIPPED", courierName: courier, trackingNumber: tracking.trim() }));
+                run(() => updateOrderStatus(order.id, { status: "SHIPPED", courierName: courier, trackingNumber: tracking.trim() }), "Order marked shipped");
               }}
               className="mt-4 grid gap-3 rounded-md bg-neutral-50 p-4 sm:grid-cols-[10rem_1fr_auto] sm:items-end"
             >
@@ -112,32 +151,10 @@ export function OrderActions({ order }: { order: AdminOrder }) {
                 </button>
               </div>
             </form>
-          ) : confirmCancel ? (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 p-4">
-              <p className="text-sm text-red-800">
-                Cancel this order?{" "}
-                {order.status !== "PENDING_PAYMENT" && "The pieces will go back into stock. "}
-                {order.paymentStatus === "PAID" && "The customer will need a refund."}
-              </p>
-              <div className="flex gap-2">
-                <button type="button" onClick={() => setConfirmCancel(false)} className={`${btn.base} ${btn.ghost}`}>
-                  Keep order
-                </button>
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => run(() => updateOrderStatus(order.id, { status: "CANCELLED" }))}
-                  className={`${btn.base} h-9 bg-red-600 px-3.5 text-white hover:bg-red-700`}
-                >
-                  {pending && <LoaderCircle className="size-4 animate-spin" />}
-                  Yes, cancel order
-                </button>
-              </div>
-            </div>
           ) : (
             <div className="mt-4 flex flex-wrap gap-2">
               {can("PACKED") && (
-                <button type="button" disabled={pending} onClick={() => run(() => updateOrderStatus(order.id, { status: "PACKED" }))} className={`${btn.base} ${btn.secondary}`}>
+                <button type="button" disabled={pending} onClick={() => run(() => updateOrderStatus(order.id, { status: "PACKED" }), "Order marked packed")} className={`${btn.base} ${btn.secondary}`}>
                   {pending ? <LoaderCircle className="size-4 animate-spin" /> : <Package className="size-4" />}
                   Mark packed
                 </button>
@@ -149,14 +166,14 @@ export function OrderActions({ order }: { order: AdminOrder }) {
                 </button>
               )}
               {can("DELIVERED") && (
-                <button type="button" disabled={pending} onClick={() => run(() => updateOrderStatus(order.id, { status: "DELIVERED" }))} className={`${btn.base} ${btn.primary}`}>
+                <button type="button" disabled={pending} onClick={onDelivered} className={`${btn.base} ${btn.primary}`}>
                   {pending ? <LoaderCircle className="size-4 animate-spin" /> : <CircleCheck className="size-4" />}
                   Mark delivered
                   {order.paymentStatus === "COD_DUE" && " · cash collected"}
                 </button>
               )}
               {can("CANCELLED") && (
-                <button type="button" disabled={pending} onClick={() => setConfirmCancel(true)} className={`${btn.base} ${btn.ghost} text-red-600 hover:bg-red-50 hover:text-red-700 sm:ml-auto`}>
+                <button type="button" disabled={pending} onClick={onCancel} className={`${btn.base} ${btn.ghost} text-red-600 hover:bg-red-50 hover:text-red-700 sm:ml-auto`}>
                   <X className="size-4" />
                   Cancel order
                 </button>

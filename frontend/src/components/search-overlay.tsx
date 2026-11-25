@@ -117,7 +117,7 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
         </div>
 
         {showResults && (
-          <div className="min-h-0 flex-1 overflow-y-auto" aria-live="polite">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" aria-live="polite">
             <div className="container-x pb-6 pt-2">
               {results.items.length === 0 ? (
                 <p className="py-6 text-sm text-stone">No pieces match &ldquo;{results.query}&rdquo;</p>

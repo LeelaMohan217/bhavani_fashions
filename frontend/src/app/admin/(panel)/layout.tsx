@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { getAlerts, getMe } from "@/lib/admin/api";
 import { AdminShell, ShellSkeleton } from "@/components/admin/shell";
+import { FeedbackProvider } from "@/components/ui/feedback";
 
 export default function PanelLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -14,8 +15,10 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
 async function Panel({ children }: { children: React.ReactNode }) {
   const [admin, alerts] = await Promise.all([getMe(), getAlerts()]);
   return (
-    <AdminShell admin={admin} alerts={alerts}>
-      {children}
-    </AdminShell>
+    <FeedbackProvider tone="admin">
+      <AdminShell admin={admin} alerts={alerts}>
+        {children}
+      </AdminShell>
+    </FeedbackProvider>
   );
 }

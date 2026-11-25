@@ -1,34 +1,42 @@
+import { Suspense } from "react";
 import Link from "next/link";
+import { getMenu, type NavNode } from "@/lib/nav";
 import { NewsletterForm } from "./newsletter-form";
 
-const COLUMNS = [
-  {
-    title: "Shop",
-    links: [
-      ["Sarees", "/shop/sarees"],
-      ["Lehengas", "/shop/lehengas"],
-      ["Kurta Sets", "/shop/kurta-sets"],
-      ["New In", "/shop?filter=new"],
-      ["Sale", "/shop?filter=sale"],
-    ],
-  },
-  {
-    title: "Help",
-    links: [
-      ["Track order", "/track-order"],
-      ["Shipping policy", "/shipping"],
-      ["Returns & exchanges", "/returns"],
-      ["Contact us", "/contact"],
-    ],
-  },
-  {
-    title: "Kosha",
-    links: [
-      ["Our story", "/our-story"],
-      ["Wishlist", "/wishlist"],
-    ],
-  },
-] as const;
+/** Columns from Admin → Navigation → Footer (Shop, Help and Kosha until one is saved) */
+async function MenuColumns() {
+  const columns = await getMenu("footer");
+  return columns.map((col) => <FooterColumn key={col.id} column={col} />);
+}
+
+function FooterColumn({ column }: { column: NavNode }) {
+  return (
+    <div>
+      {column.href ? (
+        <Link href={column.href} className="eyebrow text-canvas/50 hover:text-canvas">
+          {column.label}
+        </Link>
+      ) : (
+        <p className="eyebrow text-canvas/50">{column.label}</p>
+      )}
+      {column.children.length > 0 && (
+        <ul className="mt-5 space-y-3">
+          {column.children.map((l) => (
+            <li key={l.id}>
+              {l.href ? (
+                <Link href={l.href} className="link-draw text-sm text-canvas/85 hover:text-canvas">
+                  {l.label}
+                </Link>
+              ) : (
+                <span className="text-sm text-canvas/85">{l.label}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 export function SiteFooter() {
   return (
@@ -43,20 +51,9 @@ export function SiteFooter() {
         </div>
 
         <div className="grid grid-cols-2 gap-10 sm:grid-cols-3 md:col-span-6 md:col-start-7">
-          {COLUMNS.map((col) => (
-            <div key={col.title}>
-              <p className="eyebrow text-canvas/50">{col.title}</p>
-              <ul className="mt-5 space-y-3">
-                {col.links.map(([label, href]) => (
-                  <li key={label}>
-                    <Link href={href} className="link-draw text-sm text-canvas/85 hover:text-canvas">
-                      {label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <Suspense fallback={null}>
+            <MenuColumns />
+          </Suspense>
         </div>
       </div>
 

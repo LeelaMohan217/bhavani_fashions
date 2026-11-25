@@ -5,14 +5,13 @@ import { ArrowRight, MessageCircle, RotateCcw, ShieldCheck, Truck } from "lucide
 import { connection } from "next/server";
 import { getBanners, getCategories, getProducts, getPromotion } from "@/lib/api";
 import { discountPercent } from "@/lib/format";
-import { STORY } from "@/lib/content";
 import { ProductCard } from "@/components/product-card";
 import { ProductGridSkeleton } from "@/components/skeletons";
 import { BannerCarousel } from "@/components/home/banner-carousel";
 
 /**
- * Product-first home page: offer banners (managed in Admin → Banners), quick category
- * links, new arrivals, the current sale, bestsellers, and why to buy here.
+ * Product-first home page: offer banners (managed in Admin → Banners), category links
+ * (hidden until a category exists), new arrivals, the current sale, bestsellers, and why to buy here.
  * The brand story lives on /our-story.
  */
 export default function HomePage() {
@@ -71,10 +70,8 @@ function BannersSkeleton() {
 async function CategoryLinks() {
   await connection();
   const categories = await getCategories();
-  const links = [
-    ...categories.map((c) => ({ href: `/shop/${c.slug}`, label: c.name, image: c.imageUrl })),
-    { href: "/shop?filter=new", label: "New In", image: STORY.image },
-  ];
+  const links = categories.map((c) => ({ href: `/shop/${c.slug}`, label: c.name, image: c.imageUrl }));
+  if (links.length === 0) return null;
 
   return (
     <nav aria-label="Shop by category" className="container-x mt-8 md:mt-14">
@@ -97,14 +94,6 @@ async function CategoryLinks() {
             </Link>
           </li>
         ))}
-        <li className="shrink-0">
-          <Link href="/shop?filter=sale" className="group flex w-20 flex-col items-center gap-2.5 text-center md:w-28">
-            <span className="flex size-[4.75rem] items-center justify-center rounded-full bg-clay text-canvas ring-1 ring-line ring-offset-[3px] ring-offset-canvas transition-colors group-hover:bg-clay-deep md:size-[6.5rem]">
-              <span className="display text-xl italic md:text-2xl">Sale</span>
-            </span>
-            <span className="text-xs font-medium text-ink md:text-sm">On Sale</span>
-          </Link>
-        </li>
       </ul>
     </nav>
   );

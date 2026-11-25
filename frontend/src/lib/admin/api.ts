@@ -26,6 +26,8 @@ import type {
   AdminCustomerList,
   CouponShow,
   CustomerSort,
+  AdminNavMenu,
+  NavMenuKey,
 } from "./types";
 
 export const API_URL = process.env.API_URL ?? "http://localhost:4000";
@@ -144,6 +146,7 @@ export async function getProduct(id: string) {
 }
 
 export const getBanners = () => adminFetch<AdminBanner[]>("/banners");
+export const getNavigation = (menu: NavMenuKey) => adminFetch<AdminNavMenu>(`/navigation/${menu}`);
 
 export async function getBanner(id: string): Promise<AdminBanner | null> {
   try {

@@ -1,9 +1,29 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Heart } from "lucide-react";
 import { useWishlist } from "@/lib/wishlist";
 import type { ProductCard } from "@/lib/types";
+import { useFeedback } from "@/components/ui/feedback";
+
+/** Save or unsave a piece, with a toast: "View" after saving, "Undo" after removing. */
+function useWishlistToggle(product: ProductCard) {
+  const { has, toggle } = useWishlist();
+  const { toast } = useFeedback();
+  const router = useRouter();
+  const saved = has(product.id);
+  // Pop the heart only when the shopper taps it, not when saved hearts appear on page load
+  const [tapped, setTapped] = useState(false);
+  const onToggle = () => {
+    setTapped(true);
+    toggle(product);
+    if (saved) toast("Removed from wishlist", { action: { label: "Undo", onClick: () => toggle(product) } });
+    else toast("Saved to wishlist", { action: { label: "View", onClick: () => router.push("/wishlist") } });
+  };
+  return { saved, onToggle, pop: saved && tapped ? "animate-pop" : "" };
+}
 
 export function WishlistButton({
   product,
@@ -18,8 +38,7 @@ export function WishlistButton({
    */
   revealOnHover?: boolean;
 }) {
-  const { has, toggle } = useWishlist();
-  const saved = has(product.id);
+  const { saved, onToggle, pop } = useWishlistToggle(product);
   const reveal = revealOnHover && !saved ? "md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100" : "";
 
   return (
@@ -27,11 +46,12 @@ export function WishlistButton({
       type="button"
       aria-pressed={saved}
       aria-label={saved ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}
-      onClick={() => toggle(product)}
+      onClick={onToggle}
       className={`inline-flex size-9 items-center justify-center rounded-full bg-canvas/85 text-ink backdrop-blur transition hover:bg-canvas ${reveal} ${className}`}
     >
       <Heart
-        className={`size-4 transition-transform duration-300 ${saved ? "scale-110 fill-clay text-clay" : ""}`}
+        key={String(saved)}
+        className={`size-4 ${saved ? `fill-clay text-clay ${pop}` : ""}`}
         strokeWidth={1.5}
       />
     </button>
@@ -40,11 +60,10 @@ export function WishlistButton({
 
 /** Product page: "Add to wishlist" text link with a heart, switching to "Saved to wishlist". */
 export function WishlistTextButton({ product, className = "" }: { product: ProductCard; className?: string }) {
-  const { has, toggle } = useWishlist();
-  const saved = has(product.id);
+  const { saved, onToggle, pop } = useWishlistToggle(product);
   return (
-    <button type="button" aria-pressed={saved} onClick={() => toggle(product)} className={`inline-flex items-center gap-2 ${className}`}>
-      <Heart className={`size-3.5 transition-transform duration-300 ${saved ? "scale-110 fill-clay text-clay" : ""}`} strokeWidth={1.5} />
+    <button type="button" aria-pressed={saved} onClick={onToggle} className={`inline-flex items-center gap-2 ${className}`}>
+      <Heart key={String(saved)} className={`size-3.5 ${saved ? `fill-clay text-clay ${pop}` : ""}`} strokeWidth={1.5} />
       {saved ? "Saved to wishlist" : "Add to wishlist"}
     </button>
   );

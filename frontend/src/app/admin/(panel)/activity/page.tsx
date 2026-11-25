@@ -15,6 +15,7 @@ const AREA_LABEL: Record<ActivityArea, string> = {
   product: "Products",
   category: "Categories",
   banner: "Banners",
+  navigation: "Navigation",
   coupon: "Coupons",
   offer: "Store offer",
   account: "Admin accounts",

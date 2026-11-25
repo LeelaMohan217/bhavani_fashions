@@ -1,6 +1,7 @@
-import Link from "next/link";
+import { Suspense } from "react";
 import { BagButton } from "./cart/bag-button";
-import { NAV_LINKS } from "@/lib/content";
+import { getMenu } from "@/lib/nav";
+import { HeaderMenu } from "./header-menu";
 import { Logo } from "./logo";
 import { MobileNav } from "./mobile-nav";
 import { SearchBar, SearchButton } from "./search-overlay";
@@ -12,25 +13,24 @@ const iconButton = "size-10 items-center justify-center rounded-full text-ink tr
 
 export function SiteHeader() {
   return (
+    // `sticky` makes the header the anchor for the desktop dropdown panel (see HeaderMenu)
     <header className="sticky top-0 z-40 border-b border-line/80 bg-canvas">
-      {/* Logo on the left (after the menu button below desktop), category links centred on desktop,
-          icons on the right. The equal 1fr side columns keep the links truly centred. */}
-      <div className="container-x flex h-[4.5rem] items-center md:grid md:h-[4.5rem] md:grid-cols-[1fr_auto_1fr]">
+      {/* Logo on the left (after the menu button below desktop), menu links centred on desktop,
+          icons on the right. The side columns are equal (and never narrower than their content), so the
+          links stay centred; links that don't fit the middle move into "More". */}
+      <div className="container-x flex h-[4.5rem] items-center md:grid md:h-[4.5rem] md:grid-cols-[1fr_auto_1fr] lg:grid-cols-[minmax(max-content,1fr)_minmax(0,5fr)_minmax(max-content,1fr)] lg:gap-6">
         <div className="flex items-center gap-1">
-          <MobileNav />
+          {/* The menu button works straight away; its links arrive with the data */}
+          <Suspense fallback={<MobileNav items={[]} />}>
+            <MobileNavWithMenu />
+          </Suspense>
           <Logo align="start" />
         </div>
 
-        <nav aria-label="Main" className="hidden lg:block">
-          <ul className="flex items-center gap-8">
-            {NAV_LINKS.map((l) => (
-              <li key={l.href}>
-                <Link href={l.href} className="eyebrow link-draw pb-1 text-ink-soft hover:text-ink">
-                  {l.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+        <nav aria-label="Main" className="hidden min-w-0 lg:block">
+          <Suspense fallback={null}>
+            <DesktopMenu />
+          </Suspense>
         </nav>
 
         {/* Pinned to the last column: on tablets the hidden links would otherwise pull the icons into the middle */}
@@ -50,4 +50,13 @@ export function SiteHeader() {
       </div>
     </header>
   );
+}
+
+/** Header links from Admin → Navigation (the categories until a menu is saved) */
+async function DesktopMenu() {
+  return <HeaderMenu items={await getMenu("header")} />;
+}
+
+async function MobileNavWithMenu() {
+  return <MobileNav items={await getMenu("header")} />;
 }

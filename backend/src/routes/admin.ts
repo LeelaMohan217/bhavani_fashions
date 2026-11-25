@@ -71,6 +71,8 @@ import {
 } from "../services/coupons.js";
 import { CustomerListQuery, getCustomer, listCustomers } from "../services/admin-customers.js";
 import { ActivityQuery, listActivity, recordActivity } from "../services/activity.js";
+import { MENUS, MenuInput, getAdminMenu, saveMenu } from "../services/navigation.js";
+import { UploadInput, signUpload } from "../services/uploads.js";
 
 export const adminRouter = Router();
 
@@ -221,6 +223,19 @@ adminRouter.put("/products/:id", async (req, res) => {
 adminRouter.patch("/products/:id/status", async (req, res) => {
   const { isActive } = z.object({ isActive: z.boolean() }).parse(req.body);
   res.json(await setProductActive(req.params.id, isActive));
+});
+
+// Photo uploads: a short-lived signature for one upload straight to Cloudinary
+adminRouter.post("/uploads/sign", (req, res) => {
+  res.json(signUpload(UploadInput.parse(req.body).area));
+});
+
+// Header and footer menus
+adminRouter.get("/navigation/:menu", async (req, res) => {
+  res.json(await getAdminMenu(z.enum(MENUS).parse(req.params.menu)));
+});
+adminRouter.put("/navigation/:menu", async (req, res) => {
+  res.json(await saveMenu(z.enum(MENUS).parse(req.params.menu), MenuInput.parse(req.body).items));
 });
 
 // Home-page banners

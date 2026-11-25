@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUp, ChevronRight, GalleryHorizontalEnd, Plus, TriangleAlert } from "lucide-react";
 import { reorderBanners, setBannerActive } from "@/lib/admin/actions";
 import type { AdminBanner } from "@/lib/admin/types";
+import { useFeedback } from "@/components/ui/feedback";
 import { Badge, Card, EmptyState, btn, rowAction } from "./ui";
 
 /** Banners in slideshow order, with reorder and show/hide. Changes save straight away. */
@@ -14,6 +15,7 @@ export function BannerList({ banners: initial }: { banners: AdminBanner[] }) {
   const [banners, setBanners] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  const { toast } = useFeedback();
 
   const live = banners.filter((b) => b.isActive).length;
 
@@ -42,7 +44,10 @@ export function BannerList({ banners: initial }: { banners: AdminBanner[] }) {
       if (!res.ok) {
         setBanners(before);
         setError(res.error);
-      } else router.refresh();
+      } else {
+        toast(isActive ? "Banner is showing on the home page" : "Banner is hidden from the home page");
+        router.refresh();
+      }
     });
   };
 

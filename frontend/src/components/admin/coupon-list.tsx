@@ -9,6 +9,7 @@ import type { AdminCoupon, CouponState } from "@/lib/admin/types";
 import { formatPrice } from "@/lib/format";
 import { Badge, Card, EmptyState, formatDate, rowAction, td, th } from "./ui";
 import { Switch } from "./coupon-editor";
+import { useFeedback } from "@/components/ui/feedback";
 
 const STATE: Record<CouponState, { label: string; tone: "green" | "blue" | "neutral" | "amber" }> = {
   active: { label: "Active", tone: "green" },
@@ -31,6 +32,7 @@ export function CouponList({ coupons: initial, emptyTitle }: { coupons: AdminCou
   const [coupons, setCoupons] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  const { toast } = useFeedback();
 
   const toggle = (c: AdminCoupon) => {
     const before = coupons;
@@ -44,6 +46,7 @@ export function CouponList({ coupons: initial, emptyTitle }: { coupons: AdminCou
         return;
       }
       setCoupons((list) => list.map((x) => (x.id === c.id ? res.coupon : x)));
+      toast(c.isActive ? `${c.code} is off` : `${c.code} is on`);
       router.refresh();
     });
   };

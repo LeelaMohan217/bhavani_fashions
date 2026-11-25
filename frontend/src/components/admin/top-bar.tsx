@@ -17,7 +17,9 @@ import {
 import { logout } from "@/lib/admin/actions";
 import type { Admin, AdminAlerts } from "@/lib/admin/types";
 import { formatPrice } from "@/lib/format";
+import { lockPageScroll } from "@/lib/scroll-lock";
 import { CommandPalette } from "./command-palette";
+import { SilkMothMark } from "../logo";
 
 const initials = (name: string) =>
   name
@@ -30,8 +32,17 @@ const initials = (name: string) =>
 export function TopBar({ admin, alerts }: { admin: Admin; alerts: AdminAlerts }) {
   return (
     <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 md:px-8">
-        <CommandPalette toFulfil={alerts.toFulfilCount} />
+      {/* Phones: logo left, bell and profile right, search on its own row below. Larger screens: one row. */}
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-1.5 px-4 pb-2 pt-1.5 md:h-14 md:flex-nowrap md:px-8 md:py-0">
+        <Link href="/admin" aria-label="Kosha admin home" className="flex items-center gap-1.5 md:hidden">
+          <SilkMothMark className="size-6 shrink-0" />
+          <span className="font-display text-xl tracking-tight">Kosha</span>
+          <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[0.6rem] font-medium uppercase tracking-wider text-neutral-500">Admin</span>
+        </Link>
+
+        <div className="order-last flex w-full md:order-none md:w-auto md:flex-1">
+          <CommandPalette toFulfil={alerts.toFulfilCount} />
+        </div>
 
         <div className="ml-auto flex items-center gap-1">
           <Notifications alerts={alerts} />
@@ -64,21 +75,6 @@ function usePopover() {
   return { open, setOpen, ref };
 }
 
-/**
- * Stops the page behind an open menu from scrolling. Pads the page by the scrollbar's
- * width so content doesn't shift sideways when the scrollbar disappears.
- */
-function lockPageScroll() {
-  const html = document.documentElement;
-  const scrollbar = window.innerWidth - html.clientWidth;
-  const prev = { overflow: html.style.overflow, paddingRight: html.style.paddingRight };
-  html.style.overflow = "hidden";
-  if (scrollbar > 0) html.style.paddingRight = `${scrollbar}px`;
-  return () => {
-    html.style.overflow = prev.overflow;
-    html.style.paddingRight = prev.paddingRight;
-  };
-}
 
 const daysAgo = (iso: string) => {
   const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);

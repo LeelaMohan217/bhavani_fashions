@@ -25,6 +25,7 @@ model Category {
   parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict)
   children    Category[] @relation("CategoryTree")
   products    Product[]
+  navItems    NavItem[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -338,4 +339,41 @@ model Promotion {
   isActive   Boolean   @default(true)
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
+}
+
+enum NavMenu {
+  HEADER
+  FOOTER
+}
+
+enum NavLinkKind {
+  /// Links to a category's page; follows the category if its link name changes
+  CATEGORY
+  /// A page on this store, e.g. /shop?filter=sale or /our-story
+  LINK
+  /// A heading with no link of its own (opens its dropdown)
+  NONE
+}
+
+/// One link in the store's header or footer menu, managed in Admin → Navigation.
+/// Header: up to three levels (top link → dropdown column → links). Footer: column → links.
+model NavItem {
+  id         String      @id @default(cuid())
+  menu       NavMenu
+  parentId   String?
+  parent     NavItem?    @relation("NavTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children   NavItem[]   @relation("NavTree")
+  label      String
+  kind       NavLinkKind @default(LINK)
+  categoryId String?
+  category   Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  href       String?
+  /// Small tag next to the label, e.g. "New"
+  badge      String?
+  isActive   Boolean     @default(true)
+  sortOrder  Int         @default(0)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@index([menu, parentId, sortOrder])
 }

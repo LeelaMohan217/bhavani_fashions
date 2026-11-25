@@ -7,7 +7,10 @@ import { deleteBanner, saveBanner } from "@/lib/admin/actions";
 import type { AdminBanner, BannerPayload } from "@/lib/admin/types";
 import { BannerSlide } from "@/components/home/banner-slide";
 import { SuggestInput } from "@/components/ui/suggest-input";
+import { useFeedback } from "@/components/ui/feedback";
 import { Card, btn, inputCls } from "./ui";
+import { SinglePhoto } from "./photo-upload";
+import { useUnsavedGuard } from "./use-unsaved-guard";
 
 // Must match the API and images.remotePatterns in next.config.ts
 const IMAGE_HOSTS = ["images.unsplash.com", "res.cloudinary.com"];
@@ -69,9 +72,10 @@ export function BannerEditor({ banner }: { banner?: AdminBanner }) {
   const [saved, setSaved] = useState(false);
   const [pending, start] = useTransition();
   const [view, setView] = useState<"phone" | "desktop">("phone");
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const { confirm, toast } = useFeedback();
 
   const dirty = JSON.stringify(form) !== JSON.stringify(initial);
+  useUnsavedGuard(dirty && !pending);
   const set = <K extends keyof BannerPayload>(key: K, value: BannerPayload[K]) => {
     setForm((f) => ({ ...f, [key]: value }));
     setSaved(false);
@@ -123,24 +127,33 @@ export function BannerEditor({ banner }: { banner?: AdminBanner }) {
         setSaved(true);
         router.refresh();
       } else {
+        toast("Banner created");
         router.push("/admin/banners");
         router.refresh();
       }
     });
   };
 
-  const onDelete = () =>
+  const onDelete = async () => {
+    if (!banner) return;
+    const ok = await confirm({
+      title: "Delete this banner?",
+      body: "It will be removed for good. To take it down for now, turn off “Show on home page” instead.",
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!ok) return;
     start(async () => {
-      if (!banner) return;
       const res = await deleteBanner(banner.id);
       if (!res.ok) {
         setFormError(res.error);
-        setConfirmDelete(false);
         return;
       }
+      toast("Banner deleted");
       router.push("/admin/banners");
       router.refresh();
     });
+  };
 
   return (
     <div className="pb-28">
@@ -155,26 +168,16 @@ export function BannerEditor({ banner }: { banner?: AdminBanner }) {
           <Card title="Photo">
             <div className="space-y-4">
               <div>
-                <Label htmlFor="imageUrl">Photo link</Label>
-                <SuggestInput
-                  id="imageUrl"
+                <SinglePhoto
                   value={form.imageUrl}
-                  onChange={(e) => set("imageUrl", e.target.value)}
-                  onPick={(v) => set("imageUrl", v)}
+                  onChange={(v) => set("imageUrl", v)}
+                  area="banners"
                   suggestions={STORE_PHOTOS}
-                  placeholder="/banners/navy-silk-saree.jpg or https://images.unsplash.com/…"
-                  aria-invalid={Boolean(errors.imageUrl) || undefined}
-                  className={inputCls}
+                  invalid={Boolean(errors.imageUrl)}
+                  frameClassName="aspect-[16/9] w-48"
+                  hint="Wide photos work best (at least 2000 px across). On phones the middle of the photo shows, with the text at the bottom."
                 />
-                {err("imageUrl") ??
-                  (imgProblem ? (
-                    <p className="mt-1.5 text-xs text-amber-700">{imgProblem}</p>
-                  ) : (
-                    <p className="mt-1.5 text-xs text-neutral-500">
-                      Pick a store photo or paste a link. Wide photos work best. On phones the middle of the photo shows,
-                      with the text at the bottom.
-                    </p>
-                  ))}
+                {err("imageUrl")}
               </div>
               <div>
                 <span className="mb-1.5 block text-sm font-medium text-neutral-800">Text sits on</span>
@@ -289,23 +292,9 @@ export function BannerEditor({ banner }: { banner?: AdminBanner }) {
 
           {banner && (
             <Card title="Delete banner">
-              {confirmDelete ? (
-                <div className="space-y-3">
-                  <p className="text-sm text-neutral-700">Delete this banner for good? To take it down for now, turn off “Show on home page” instead.</p>
-                  <div className="flex flex-wrap gap-2">
-                    <button type="button" disabled={pending} onClick={onDelete} className={`${btn.base} ${btn.danger}`}>
-                      {pending ? <LoaderCircle className="size-4 animate-spin" /> : <Trash2 className="size-4" />} Yes, delete
-                    </button>
-                    <button type="button" onClick={() => setConfirmDelete(false)} className={`${btn.base} ${btn.ghost}`}>
-                      Keep it
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button type="button" onClick={() => setConfirmDelete(true)} className={`${btn.base} ${btn.danger}`}>
-                  <Trash2 className="size-4" /> Delete banner
-                </button>
-              )}
+              <button type="button" disabled={pending} onClick={onDelete} className={`${btn.base} ${btn.danger}`}>
+                <Trash2 className="size-4" /> Delete banner
+              </button>
             </Card>
           )}
         </div>

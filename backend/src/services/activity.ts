@@ -11,7 +11,7 @@ import { formatOrderNumber } from "../config/store.js";
  * to write it never breaks the change itself. Passwords and other request bodies are never stored.
  */
 
-export const AREAS = ["order", "product", "category", "banner", "coupon", "offer", "account", "profile"] as const;
+export const AREAS = ["order", "product", "category", "banner", "navigation", "coupon", "offer", "account", "profile"] as const;
 type Area = (typeof AREAS)[number];
 
 type Ctx = {
@@ -79,6 +79,14 @@ const RULES: Rule[] = [
   { method: "PUT", path: new RegExp(`^/banners/${ID}$`), area: "banner", lookup: lookups.banner, summary: (c) => `Edited banner ${named(c, "title")}`, href: (c) => `/admin/banners/${c.id}` },
   { method: "PATCH", path: new RegExp(`^/banners/${ID}/status$`), area: "banner", lookup: lookups.banner, summary: (c) => `${shown(c)} banner ${c.before}`, href: (c) => `/admin/banners/${c.id}` },
   { method: "DELETE", path: new RegExp(`^/banners/${ID}$`), area: "banner", lookup: lookups.banner, summary: (c) => `Deleted banner ${c.before}` },
+  // Header and footer menus
+  {
+    method: "PUT",
+    path: /^\/navigation\/(header|footer)$/,
+    area: "navigation",
+    summary: (c) => `${Array.isArray(c.input?.items) && c.input.items.length === 0 ? "Reset" : "Edited"} the ${c.id} menu`,
+    href: () => "/admin/navigation",
+  },
   // Coupons
   { method: "POST", path: /^\/coupons$/, area: "coupon", summary: (c) => `Created coupon ${named(c, "code")}`, href: (c) => `/admin/coupons/${str(c.body?.id)}` },
   { method: "PUT", path: new RegExp(`^/coupons/${ID}$`), area: "coupon", lookup: lookups.coupon, summary: (c) => `Edited coupon ${named(c, "code")}`, href: (c) => `/admin/coupons/${c.id}` },

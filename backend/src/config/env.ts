@@ -15,6 +15,8 @@ const EnvSchema = z.object({
   RAZORPAY_KEY_SECRET: optional,
   /** The secret typed when adding the webhook in the Razorpay dashboard (Settings → Webhooks) */
   RAZORPAY_WEBHOOK_SECRET: optional,
+  /** cloudinary://<api key>:<api secret>@<cloud name>, from Cloudinary → Settings → API Keys */
+  CLOUDINARY_URL: optional,
 });
 
 const parsed = EnvSchema.safeParse(process.env);
@@ -34,8 +36,20 @@ if (data.RAZORPAY_KEY_ID?.startsWith("rzp_live_") && data.NODE_ENV !== "producti
   process.exit(1);
 }
 
+/** Photo uploads: parsed from CLOUDINARY_URL, or null when it isn't set */
+function parseCloudinary(value: string | undefined) {
+  if (!value) return null;
+  const m = value.match(/^cloudinary:\/\/([^:@\s]+):([^@\s]+)@([a-z0-9_-]+)$/i);
+  if (!m) {
+    console.error("CLOUDINARY_URL should look like cloudinary://<api key>:<api secret>@<cloud name>. Photo uploads are off.");
+    return null;
+  }
+  return { apiKey: m[1], apiSecret: m[2], cloudName: m[3] };
+}
+
 export const env = {
   ...data,
   corsOrigins: data.CORS_ORIGINS.split(",").map((o) => o.trim()).filter(Boolean),
   razorpayEnabled: Boolean(data.RAZORPAY_KEY_ID && data.RAZORPAY_KEY_SECRET),
+  cloudinary: parseCloudinary(data.CLOUDINARY_URL),
 };

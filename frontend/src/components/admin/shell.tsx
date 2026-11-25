@@ -3,9 +3,11 @@
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AlertTriangle, ExternalLink, FolderTree, History, TicketPercent, Users, GalleryHorizontalEnd, TrendingUp, LayoutDashboard, LifeBuoy, MoreHorizontal, PanelLeftClose, PanelLeftOpen, Receipt, Settings, Shirt, X } from "lucide-react";
+import { createPortal } from "react-dom";
+import { AlertTriangle, ExternalLink, FolderTree, History, TicketPercent, Users, GalleryHorizontalEnd, TrendingUp, LayoutDashboard, LifeBuoy, MoreHorizontal, PanelLeftClose, PanelLeftOpen, PanelTop, Receipt, Settings, Shirt, X } from "lucide-react";
 import type { Admin, AdminAlerts } from "@/lib/admin/types";
 import { TopBar } from "./top-bar";
+import { keepScrollInside, lockPageScroll } from "@/lib/scroll-lock";
 import { SilkMothMark } from "../logo";
 
 type BadgeKey = "toFulfil" | "lowStock";
@@ -31,8 +33,9 @@ const NAV: NavItem[] = [
   { href: "/admin/low-stock", label: "Low stock", icon: AlertTriangle, badgeKey: "lowStock", phoneMore: true },
   { href: "/admin/categories", label: "Categories", icon: FolderTree },
   { href: "/admin/coupons", label: "Coupons", icon: TicketPercent, phoneMore: true },
-  { href: "/admin/insights", label: "Best sellers", icon: TrendingUp },
-  { href: "/admin/banners", label: "Banners", icon: GalleryHorizontalEnd },
+  { href: "/admin/insights", label: "Best sellers", icon: TrendingUp, phoneMore: true },
+  { href: "/admin/banners", label: "Banners", icon: GalleryHorizontalEnd, phoneMore: true },
+  { href: "/admin/navigation", label: "Navigation", icon: PanelTop, phoneMore: true },
 ];
 
 const FOOTER_NAV: NavItem[] = [
@@ -105,7 +108,8 @@ export function AdminShell({ admin, alerts, children }: { admin: Admin; alerts: 
         pill.style.opacity = "0";
         return;
       }
-      const top = current.getBoundingClientRect().top - box.getBoundingClientRect().top;
+      // The list scrolls on short screens; the pill lives inside it, so measure from the list's top edge
+      const top = current.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop;
       // First placement snaps into position; later moves glide.
       pill.style.transition = placed.current
         ? "transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), height 0.3s ease, opacity 0.2s ease"
@@ -119,6 +123,10 @@ export function AdminShell({ admin, alerts, children }: { admin: Admin; alerts: 
     window.addEventListener("resize", place);
     return () => window.removeEventListener("resize", place);
   }, [pathname, collapsed]);
+
+  // Scrolling over the sidebar scrolls its own list (on short screens), never the page beside it
+  const asideRef = useRef<HTMLElement>(null);
+  useEffect(() => (asideRef.current ? keepScrollInside(asideRef.current) : undefined), []);
 
   // Ctrl/⌘ + B toggles the rail, like most editors
   useEffect(() => {
@@ -149,6 +157,7 @@ export function AdminShell({ admin, alerts, children }: { admin: Admin; alerts: 
 
       {/* Desktop (lg+): full sidebar or collapsed icon rail */}
       <aside
+        ref={asideRef}
         data-collapsed={collapsed || undefined}
         className={`group/sidebar fixed inset-y-0 left-0 z-50 hidden w-[var(--sidebar-w)] flex-col border-r border-neutral-200 bg-white duration-200 lg:flex ${
           animate ? "transition-[width]" : ""
@@ -179,8 +188,13 @@ export function AdminShell({ admin, alerts, children }: { admin: Admin; alerts: 
           </div>
         </div>
 
-        {/* Sliding active highlight — one pill that glides to whichever item is current */}
-        <div className="relative flex flex-1 flex-col" ref={navRef}>
+        {/* Sliding active highlight — one pill that glides to whichever item is current.
+            The list scrolls by itself on short screens (expanded or collapsed). */}
+        <div
+          className="relative flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          ref={navRef}
+          onScroll={() => window.dispatchEvent(new Event("admin-sidebar-scroll"))}
+        >
           <span
             ref={indicatorRef}
             aria-hidden
@@ -246,17 +260,44 @@ function RailItem({
   className?: string;
   style?: React.CSSProperties;
 }) {
+  // The label is placed on screen (position: fixed) so the scrolling sidebar list can't clip it
+  const [at, setAt] = useState<{ top: number; left: number } | null>(null);
+  const show = (e: React.SyntheticEvent<HTMLDivElement>) => {
+    if (!collapsed) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    setAt({ top: r.top + r.height / 2, left: r.right + 8 });
+  };
+  const hide = () => setAt(null);
+  // The list moved under the pointer: drop the label rather than leave it beside the wrong item
+  useEffect(() => {
+    if (!at) return;
+    window.addEventListener("admin-sidebar-scroll", hide);
+    return () => window.removeEventListener("admin-sidebar-scroll", hide);
+  }, [at]);
+
   return (
-    <div className={`group/item relative ${className}`} style={style}>
+    <div
+      className={`relative ${className}`}
+      style={style}
+      onMouseEnter={show}
+      onMouseLeave={hide}
+      onFocus={(e) => e.currentTarget.querySelector(":focus-visible") && show(e)}
+      onBlur={hide}
+    >
       {children}
-      {collapsed && (
-        <span
-          role="tooltip"
-          className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 hidden -translate-y-1/2 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs font-medium text-white shadow-md lg:group-hover/item:block lg:group-has-[:focus-visible]/item:block"
-        >
-          {label}
-        </span>
-      )}
+      {/* Portalled to <body>: the items' slide-in animation leaves a transform that would offset a fixed label */}
+      {collapsed &&
+        at &&
+        createPortal(
+          <span
+            role="tooltip"
+            style={{ top: at.top, left: at.left }}
+            className="pointer-events-none fixed z-[60] hidden -translate-y-1/2 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs font-medium text-white shadow-md lg:block"
+          >
+            {label}
+          </span>,
+          document.body,
+        )}
     </div>
   );
 }
@@ -349,6 +390,8 @@ function CountBadge({ count, className = "" }: { count: number; className?: stri
 
 function NavRail({ counts }: { counts: Counts }) {
   const isActive = useIsActive();
+  const railRef = useRef<HTMLElement>(null);
+  useEffect(() => (railRef.current ? keepScrollInside(railRef.current) : undefined), []);
 
   const item = (n: NavItem, badge = 0, hint = "") => {
     const active = isActive(n.href, n.exact);
@@ -377,20 +420,23 @@ function NavRail({ counts }: { counts: Counts }) {
   };
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-20 flex-col items-stretch border-r border-neutral-200 bg-white md:flex lg:hidden">
+    <aside ref={railRef} className="fixed inset-y-0 left-0 z-40 hidden w-20 flex-col items-stretch border-r border-neutral-200 bg-white md:flex lg:hidden">
       <Link
         href="/admin"
         aria-label="Kosha admin home"
-        className="mx-auto mt-3 flex size-10 items-center justify-center rounded-xl bg-neutral-900 text-white"
+        className="mx-auto mt-3 flex size-10 shrink-0 items-center justify-center rounded-xl bg-neutral-900 text-white"
       >
         <SilkMothMark className="size-6" />
       </Link>
-      <nav aria-label="Admin" className="mt-6 flex flex-1 flex-col gap-2 px-1">
-        {NAV.map((n) => (n.badgeKey ? item(n, counts[n.badgeKey], BADGE_HINT[n.badgeKey]) : item(n)))}
-      </nav>
-      <nav aria-label="Support" className="flex flex-col gap-2 px-1 pb-4">
-        {FOOTER_NAV.map((n) => item(n))}
-      </nav>
+      {/* Scrolls by itself when the links don't fit (landscape tablets) */}
+      <div className="mt-6 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain [scrollbar-width:none]">
+        <nav aria-label="Admin" className="flex flex-1 flex-col gap-2 px-1">
+          {NAV.map((n) => (n.badgeKey ? item(n, counts[n.badgeKey], BADGE_HINT[n.badgeKey]) : item(n)))}
+        </nav>
+        <nav aria-label="Support" className="flex flex-col gap-2 px-1 pb-4 pt-2">
+          {FOOTER_NAV.map((n) => item(n))}
+        </nav>
+      </div>
     </aside>
   );
 }
@@ -458,12 +504,20 @@ function BottomNav({ counts, moreOpen, onMore }: { counts: Counts; moreOpen: boo
 /** Bottom sheet holding the less-used destinations on phones. */
 function MoreSheet({ counts, open, onClose }: { counts: Counts; open: boolean; onClose: () => void }) {
   const isActive = useIsActive();
+  const sheetRef = useRef<HTMLDivElement>(null);
 
+  // While open: Escape closes, and the page behind stays still (the sheet scrolls itself if it's tall)
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    const unlock = lockPageScroll();
+    const release = sheetRef.current ? keepScrollInside(sheetRef.current) : undefined;
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      unlock();
+      release?.();
+    };
   }, [open, onClose]);
 
   const links = [
@@ -479,9 +533,10 @@ function MoreSheet({ counts, open, onClose }: { counts: Counts; open: boolean; o
         className={`fixed inset-0 z-30 bg-neutral-900/30 transition-opacity duration-200 ${open ? "opacity-100" : "opacity-0"}`}
       />
       <div
+        ref={sheetRef}
         role="dialog"
         aria-label="More"
-        className={`fixed inset-x-0 bottom-[var(--bottom-nav-h)] z-30 rounded-t-2xl border-t border-neutral-200 bg-white px-3 pb-3 pt-2 shadow-[0_-8px_24px_-12px_rgb(0_0_0/0.15)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+        className={`fixed inset-x-0 bottom-[var(--bottom-nav-h)] z-30 flex max-h-[calc(100dvh-var(--bottom-nav-h)-3rem)] flex-col rounded-t-2xl border-t border-neutral-200 bg-white px-3 pb-3 pt-2 shadow-[0_-8px_24px_-12px_rgb(0_0_0/0.15)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
           open ? "translate-y-0" : "translate-y-[calc(100%+var(--bottom-nav-h))]"
         }`}
       >
@@ -504,7 +559,8 @@ function MoreSheet({ counts, open, onClose }: { counts: Counts; open: boolean; o
             <X className="size-4" />
           </button>
         </div>
-        <ul className="grid grid-cols-3 gap-2">
+        <ul className="grid min-h-0 grid-cols-3 gap-2 overflow-y-auto overscroll-contain">
+
           {links.map((n) => {
             const active = !n.external && isActive(n.href);
             const Icon = n.icon;

@@ -2,11 +2,13 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ImagePlus, LoaderCircle, Trash2, TriangleAlert, X } from "lucide-react";
+import { Check, LoaderCircle, Trash2, TriangleAlert } from "lucide-react";
 import { deleteCategory, saveCategory } from "@/lib/admin/actions";
 import type { AdminCategory, AdminCategoryDetail, CategoryPayload } from "@/lib/admin/types";
 import { Select } from "@/components/ui/select";
-import { SuggestInput } from "@/components/ui/suggest-input";
+import { SinglePhoto } from "./photo-upload";
+import { useFeedback } from "@/components/ui/feedback";
+import { useUnsavedGuard } from "./use-unsaved-guard";
 
 /** Photos that ship with the store (public/banners) */
 const STORE_PHOTOS = ["/banners/navy-silk-saree.jpg", "/banners/pink-half-saree.jpg", "/banners/festive-silk-sarees.jpg"];
@@ -45,10 +47,11 @@ export function CategoryEditor({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const [pending, start] = useTransition();
+  const { confirm, toast } = useFeedback();
 
   const dirty = JSON.stringify(form) !== JSON.stringify(initial);
+  useUnsavedGuard(dirty && !pending);
   const set = <K extends keyof CategoryPayload>(key: K, value: CategoryPayload[K]) => {
     setForm((f) => ({ ...f, [key]: value, ...(key === "name" && !slugTouched ? { slug: slugify(String(value)) } : {}) }));
     setSaved(false);
@@ -87,24 +90,33 @@ export function CategoryEditor({
         setSaved(true);
         router.refresh();
       } else {
+        toast(`${form.name.trim()} was created`);
         router.push("/admin/categories");
         router.refresh();
       }
     });
   };
 
-  const onDelete = () =>
+  const onDelete = async () => {
+    if (!category) return;
+    const ok = await confirm({
+      title: `Delete ${category.name}?`,
+      body: "It will be removed for good. This can't be undone.",
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!ok) return;
     start(async () => {
-      if (!category) return;
       const res = await deleteCategory(category.id);
       if (!res.ok) {
         setFormError(res.error);
-        setConfirmDelete(false);
         return;
       }
+      toast(`${category.name} was deleted`);
       router.push("/admin/categories");
       router.refresh();
     });
+  };
 
   const field = (key: "name" | "slug" | "tagline" | "description" | "imageUrl") => ({
     id: key,
@@ -185,48 +197,17 @@ export function CategoryEditor({
           </div>
         </Card>
 
-        <Card title="Photo">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            <div className="shrink-0">
-              <span className="relative flex aspect-[3/4] w-32 items-center justify-center overflow-hidden rounded-lg border border-dashed border-neutral-200 bg-neutral-50 text-neutral-400">
-                {form.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- preview of an unsaved link
-                  <img src={form.imageUrl} alt="" className="absolute inset-0 size-full object-cover" />
-                ) : (
-                  <span className="flex flex-col items-center gap-1.5 text-xs">
-                    <ImagePlus className="size-5" />
-                    No photo
-                  </span>
-                )}
-              </span>
-              {form.imageUrl && (
-                <button type="button" onClick={() => set("imageUrl", "")} className="mt-2 inline-flex items-center gap-1.5 text-xs text-neutral-500 hover:text-red-600">
-                  <X className="size-3.5" /> Remove photo
-                </button>
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <Label htmlFor="imageUrl" hint="Optional">
-                {form.imageUrl ? "Replace photo" : "Add a photo"}
-              </Label>
-              <SuggestInput
-                id="imageUrl"
-                value={form.imageUrl}
-                onChange={(e) => set("imageUrl", e.target.value)}
-                onPick={(v) => set("imageUrl", v)}
-                suggestions={STORE_PHOTOS}
-                placeholder="Pick a store photo or paste an image link"
-                aria-invalid={Boolean(errors.imageUrl) || undefined}
-                className={inputCls}
-              />
-              {err("imageUrl") ?? (
-                <p className="mt-1.5 text-xs leading-relaxed text-neutral-500">
-                  Choose one of the store&rsquo;s photos, or paste a link from Unsplash or Cloudinary. Shown in the round category
-                  picture on the home page. Uploading from your computer arrives with Cloudinary.
-                </p>
-              )}
-            </div>
-          </div>
+        <Card title="Photo" action={<span className="text-xs text-neutral-500">Optional</span>}>
+          <SinglePhoto
+            value={form.imageUrl}
+            onChange={(v) => set("imageUrl", v)}
+            area="categories"
+            suggestions={STORE_PHOTOS}
+            invalid={Boolean(errors.imageUrl)}
+            frameClassName="aspect-square w-32"
+            hint="Shown in the round category picture on the home page. A square photo works best. JPG, PNG or WebP, up to 10 MB."
+          />
+          {err("imageUrl")}
         </Card>
 
         <Card title="Visibility">
@@ -258,20 +239,8 @@ export function CategoryEditor({
                   ? `It has ${category.childCount} subcategor${category.childCount === 1 ? "y" : "ies"}. Move or delete them first.`
                   : `It has ${category.productCount} product${category.productCount === 1 ? "" : "s"}. Move them to another category first, or hide this category instead.`}
               </p>
-            ) : confirmDelete ? (
-              <div className="space-y-3">
-                <p className="text-sm text-neutral-700">Delete {category.name} for good?</p>
-                <div className="flex flex-wrap gap-2">
-                  <button type="button" disabled={pending} onClick={onDelete} className={`${btn.base} ${btn.danger}`}>
-                    {pending ? <LoaderCircle className="size-4 animate-spin" /> : <Trash2 className="size-4" />} Yes, delete
-                  </button>
-                  <button type="button" onClick={() => setConfirmDelete(false)} className={`${btn.base} ${btn.ghost}`}>
-                    Keep it
-                  </button>
-                </div>
-              </div>
             ) : (
-              <button type="button" onClick={() => setConfirmDelete(true)} className={`${btn.base} ${btn.danger}`}>
+              <button type="button" disabled={pending} onClick={onDelete} className={`${btn.base} ${btn.danger}`}>
                 <Trash2 className="size-4" /> Delete category
               </button>
             )}
