@@ -28,7 +28,13 @@ export type ProductCard = {
   inStock: boolean;
   /** Priced with the store-wide promotion (e.g. Black Friday) */
   onPromotion?: boolean;
+  /** Pieces sold in real (confirmed or later) orders */
+  sold?: number;
+  /** Buyable options for adding to the bag from the card (older wishlist snapshots lack them) */
+  options?: CardOption[];
 };
+
+export type CardOption = { id: string; color: string; colorHex: string; size: string | null; stock: number };
 
 export type ProductVariant = {
   id: string;
@@ -54,6 +60,8 @@ export type ProductDetail = {
   images: ProductImage[];
   variants: ProductVariant[];
   related: ProductCard[];
+  /** Pieces sold in real (confirmed or later) orders */
+  sold?: number;
   onPromotion?: boolean;
 };
 
@@ -81,6 +89,13 @@ export type Banner = {
   imageAlt: string;
   /** Side of the photo the text sits on (tablet and desktop) */
   textSide: "LEFT" | "RIGHT";
+};
+
+/** Filter choices on offer in a listing, with how many products each finds */
+export type ProductFilters = {
+  colors: { name: string; hex: string; count: number }[];
+  fabrics: { name: string; count: number }[];
+  occasions: { name: string; count: number }[];
 };
 
 export type SortOption = "featured" | "newest" | "price-asc" | "price-desc";

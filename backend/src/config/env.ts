@@ -13,6 +13,8 @@ const EnvSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   RAZORPAY_KEY_ID: optional,
   RAZORPAY_KEY_SECRET: optional,
+  /** The secret typed when adding the webhook in the Razorpay dashboard (Settings → Webhooks) */
+  RAZORPAY_WEBHOOK_SECRET: optional,
 });
 
 const parsed = EnvSchema.safeParse(process.env);

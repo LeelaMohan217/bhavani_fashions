@@ -42,9 +42,11 @@ const COPY: Record<Layout, Record<Side, string>> = {
     RIGHT: "inset-y-0 right-0 flex w-[42%] flex-col items-start justify-center px-8",
   },
   responsive: {
-    // Narrow column (about a third of the banner) so the copy stays clear of the model
-    LEFT: "inset-x-0 bottom-0 px-6 pb-14 pt-7 md:inset-y-0 md:right-auto md:flex md:w-[42%] md:flex-col md:items-start md:justify-center md:px-10 md:pb-14 lg:w-[36%] lg:pl-16 lg:pr-0",
-    RIGHT: "inset-x-0 bottom-0 px-6 pb-14 pt-7 md:inset-y-0 md:left-auto md:flex md:w-[42%] md:flex-col md:items-start md:justify-center md:px-10 md:pb-14 lg:w-[36%] lg:pl-0 lg:pr-16",
+    // Narrow column (about a third of the banner) so the copy stays clear of the model. On screens
+    // wider than the page (90rem) the column grows by the side margin, so the text lines up with
+    // the page content below instead of hugging the screen edge.
+    LEFT: "inset-x-0 bottom-0 px-6 pb-14 pt-7 md:inset-y-0 md:right-auto md:flex md:w-[42%] md:flex-col md:items-start md:justify-center md:px-10 md:pb-14 lg:w-[max(36%,calc((100vw-90rem)/2+30rem))] lg:pl-[max(4rem,calc((100vw-90rem)/2+2.5rem))] lg:pr-0",
+    RIGHT: "inset-x-0 bottom-0 px-6 pb-14 pt-7 md:inset-y-0 md:left-auto md:flex md:w-[42%] md:flex-col md:items-start md:justify-center md:px-10 md:pb-14 lg:w-[max(36%,calc((100vw-90rem)/2+30rem))] lg:pl-0 lg:pr-[max(4rem,calc((100vw-90rem)/2+2.5rem))]",
   },
 };
 

@@ -16,5 +16,7 @@ export function cardFromDetail(p: ProductDetail): ProductCard {
     images: p.images.slice(0, 2),
     colors: [...colors].map(([name, hex]) => ({ name, hex })),
     inStock: p.variants.some((v) => v.stock > 0),
+    sold: p.sold,
+    options: p.variants.map((v) => ({ id: v.id, color: v.color, colorHex: v.colorHex, size: v.size, stock: v.stock })),
   };
 }

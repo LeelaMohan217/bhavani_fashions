@@ -62,6 +62,24 @@ only shows products once `API_URL` points at a running API.
 2. In Render → the API service → **Environment**, set `CORS_ORIGINS` to that URL and save (it redeploys).
 3. Visit the site, then `/admin` and sign in with the admin you created.
 
+## 5. Online payments: Razorpay
+
+Cash on delivery works without this. To take UPI, card, net banking and wallet payments:
+
+1. In the Razorpay dashboard (Test mode first), go to **Account & Settings → API Keys**, generate a key pair.
+2. In Render → the API service → **Environment**, set `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET`.
+3. Make up a long random string for the webhook secret (a password manager can generate one) and set it as
+   `RAZORPAY_WEBHOOK_SECRET` in Render.
+4. In Razorpay → **Account & Settings → Webhooks → Add new webhook**:
+   - Webhook URL: `https://<your-render-api>.onrender.com/api/payments/razorpay/webhook`
+   - Secret: the same string as `RAZORPAY_WEBHOOK_SECRET`
+   - Active events: `order.paid`, `payment.captured`, `payment.failed`
+5. Place a test order with Razorpay's test card or test UPI, then check it shows as **Paid** in `/admin/orders`.
+   The order's history shows "confirmed by Razorpay" once the webhook has arrived.
+
+Going live: switch the dashboard to Live mode, generate live keys and add a second webhook there (live and test
+webhooks are separate), then replace the three values in Render. Live keys are refused outside production.
+
 ## Updating later
 
 Push to `main` on GitHub — Vercel and Render both redeploy automatically. New database migrations are applied by

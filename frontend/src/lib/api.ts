@@ -1,7 +1,17 @@
 // Server-side data access for the storefront. Results are cached for a few minutes
 // with Next.js Cache Components ("use cache") and tagged so they can be revalidated.
 import { cacheLife, cacheTag } from "next/cache";
-import type { Banner, Category, Promotion, CheckoutConfig, OrderDetail, ProductDetail, ProductList, SortOption } from "./types";
+import type {
+  Banner,
+  Category,
+  Promotion,
+  CheckoutConfig,
+  OrderDetail,
+  ProductDetail,
+  ProductFilters,
+  ProductList,
+  SortOption,
+} from "./types";
 
 const API_URL = process.env.API_URL ?? "http://localhost:4000";
 
@@ -43,11 +53,13 @@ export type ProductQuery = {
   isNew?: boolean;
   /** Only marked-down products */
   sale?: boolean;
-  /** e.g. "Wedding" (matches the product's occasion) */
-  occasion?: string;
-  /** Shopper-facing price bounds in paise (inclusive) */
-  minPrice?: number;
-  maxPrice?: number;
+  /** Any of these occasions, e.g. ["Wedding", "Festive"] */
+  occasion?: string[];
+  /** Any of these colours / fabrics */
+  color?: string[];
+  fabric?: string[];
+  /** Any of these shopper-facing price bands, in paise; max is exclusive */
+  price?: { min?: number; max?: number }[];
   sort?: SortOption;
   page?: number;
   pageSize?: number;
@@ -64,9 +76,10 @@ export async function getProducts(query: ProductQuery = {}): Promise<ProductList
   if (query.featured !== undefined) params.set("featured", String(query.featured));
   if (query.isNew !== undefined) params.set("new", String(query.isNew));
   if (query.sale) params.set("sale", "true");
-  if (query.occasion) params.set("occasion", query.occasion);
-  if (query.minPrice !== undefined) params.set("minPrice", String(query.minPrice));
-  if (query.maxPrice !== undefined) params.set("maxPrice", String(query.maxPrice));
+  if (query.occasion?.length) params.set("occasion", query.occasion.join(","));
+  if (query.color?.length) params.set("color", query.color.join(","));
+  if (query.fabric?.length) params.set("fabric", query.fabric.join(","));
+  if (query.price?.length) params.set("price", query.price.map((b) => `${b.min ?? ""}-${b.max ?? ""}`).join(","));
   if (query.sort) params.set("sort", query.sort);
   if (query.page) params.set("page", String(query.page));
   if (query.pageSize) params.set("pageSize", String(query.pageSize));
@@ -100,6 +113,18 @@ export async function getProduct(slug: string): Promise<ProductDetail | null> {
     if (e instanceof ApiError && e.status === 404) return null;
     throw e;
   }
+}
+
+/** Colours, fabrics and occasions on offer in a listing (for the shop filter sidebar). */
+export async function getProductFilters(query: { category?: string; isNew?: boolean; sale?: boolean }): Promise<ProductFilters> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("catalogue");
+  const params = new URLSearchParams();
+  if (query.category) params.set("category", query.category);
+  if (query.isNew) params.set("new", "true");
+  if (query.sale) params.set("sale", "true");
+  return get<ProductFilters>(`/api/products/filters?${params}`);
 }
 
 /** Live home-page banners, in order. Admin saves refresh this immediately via the "banners" tag. */

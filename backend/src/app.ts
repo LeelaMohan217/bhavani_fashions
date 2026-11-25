@@ -9,6 +9,7 @@ import { checkoutRouter, ordersRouter } from "./routes/checkout.js";
 import { adminRouter } from "./routes/admin.js";
 import { bannersRouter } from "./routes/banners.js";
 import { promotionRouter } from "./routes/promotion.js";
+import { paymentsRouter } from "./routes/payments.js";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler.js";
 
 export function createApp() {
@@ -17,6 +18,8 @@ export function createApp() {
   app.disable("x-powered-by");
   app.use(helmet());
   app.use(cors({ origin: env.corsOrigins }));
+  // Before express.json(): the Razorpay webhook needs the raw request body to check its signature
+  app.use("/api/payments", paymentsRouter);
   app.use(express.json({ limit: "1mb" }));
 
   app.get("/api/health", (_req, res) => {

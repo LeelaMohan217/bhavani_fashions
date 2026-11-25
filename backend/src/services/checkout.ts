@@ -164,43 +164,76 @@ export async function verifyPayment(input: z.infer<typeof VerifyPaymentSchema>) 
   if (!order || order.paymentMethod !== "RAZORPAY") throw notFound("Order");
   if (order.razorpayOrderId !== input.razorpayOrderId) throw new HttpError(400, "Payment does not match this order.");
 
-  // Idempotent: a repeated verification of a confirmed order just succeeds.
-  if (order.status === "CONFIRMED") return { orderId: order.id, status: order.status };
-  if (order.status !== "PENDING_PAYMENT") throw new HttpError(409, "This order can no longer be paid.");
-
   if (!verifyPaymentSignature(input.razorpayOrderId, input.razorpayPaymentId, input.razorpaySignature)) {
     throw new HttpError(400, "We couldn't verify this payment. If money was deducted, it will be refunded.");
   }
 
+  const outcome = await confirmPaidOrder(order.id, input.razorpayPaymentId, "checkout");
+  if (outcome === "confirmed" || outcome === "already_confirmed") return { orderId: order.id, status: "CONFIRMED" as const };
+  if (outcome === "sold_out") {
+    throw new HttpError(
+      409,
+      "A piece sold out just before your payment completed. Your order is cancelled and a full refund will be issued within 5 to 7 days.",
+    );
+  }
+  throw new HttpError(409, "This order can no longer be paid. If money was deducted, it will be refunded.");
+}
+
+export type PaidOutcome = "confirmed" | "already_confirmed" | "sold_out" | "not_payable";
+
+/**
+ * Marks a Razorpay order as paid: takes the stock, empties those pieces from the bag and logs it.
+ * Called by both the shopper's browser (after checkout) and Razorpay's webhook, possibly at the
+ * same moment, so it only ever runs once per order: the first caller moves the order out of
+ * PENDING_PAYMENT inside the transaction, and the database makes any second caller wait and then
+ * find nothing to update.
+ */
+export async function confirmPaidOrder(orderId: string, paymentId: string, via: "checkout" | "webhook"): Promise<PaidOutcome> {
   try {
-    const confirmed = await prisma.$transaction(async (tx) => {
+    return await prisma.$transaction(async (tx) => {
+      const claimed = await tx.order.updateMany({
+        where: { id: orderId, status: "PENDING_PAYMENT" },
+        data: { status: "CONFIRMED", paymentStatus: "PAID", razorpayPaymentId: paymentId, confirmedAt: new Date() },
+      });
+
+      if (claimed.count === 0) {
+        const current = await tx.order.findUnique({ where: { id: orderId }, select: { status: true, paymentStatus: true } });
+        if (!current) return "not_payable";
+        if (current.status !== "CANCELLED") return "already_confirmed";
+        if (current.paymentStatus === "REFUND_DUE" || current.paymentStatus === "REFUNDED") return "sold_out";
+        // The order was cancelled (e.g. by the team) while unpaid, and the money arrived anyway
+        await tx.order.update({ where: { id: orderId }, data: { paymentStatus: "REFUND_DUE", razorpayPaymentId: paymentId } });
+        await tx.orderEvent.create({
+          data: { orderId, type: "payment:REFUND_DUE", message: `Payment ${paymentId} arrived after the order was cancelled · refund due` },
+        });
+        return "not_payable";
+      }
+
+      const order = await tx.order.findUniqueOrThrow({ where: { id: orderId }, include: { items: true } });
       await reserveStock(tx, order.items);
-      const updated = await tx.order.update({
-        where: { id: order.id },
+      await clearPurchased(tx, order.cartId, order.items.map((i) => i.variantId));
+      await tx.orderEvent.create({
         data: {
-          status: "CONFIRMED",
-          paymentStatus: "PAID",
-          razorpayPaymentId: input.razorpayPaymentId,
-          confirmedAt: new Date(),
+          orderId,
+          type: "payment:PAID",
+          message: via === "webhook" ? `Paid online · confirmed by Razorpay (${paymentId})` : `Paid online (${paymentId})`,
         },
       });
-      await clearPurchased(tx, order.cartId, order.items.map((i) => i.variantId));
-      return updated;
+      return "confirmed";
     });
-    return { orderId: confirmed.id, status: confirmed.status };
   } catch (e) {
-    if (e instanceof OutOfStockError) {
-      // Paid but can't be fulfilled — record it so the team can refund.
-      await prisma.order.update({
-        where: { id: order.id },
-        data: { status: "CANCELLED", paymentStatus: "REFUND_DUE", razorpayPaymentId: input.razorpayPaymentId },
+    if (!(e instanceof OutOfStockError)) throw e;
+    // Paid but a piece sold out first: the whole transaction rolled back, so cancel and flag the refund
+    const cancelled = await prisma.order.updateMany({
+      where: { id: orderId, status: "PENDING_PAYMENT" },
+      data: { status: "CANCELLED", paymentStatus: "REFUND_DUE", razorpayPaymentId: paymentId, cancelledAt: new Date() },
+    });
+    if (cancelled.count > 0) {
+      await prisma.orderEvent.create({
+        data: { orderId, type: "payment:REFUND_DUE", message: `Paid (${paymentId}) but a piece had sold out · cancelled, refund due` },
       });
-      throw new HttpError(
-        409,
-        "A piece sold out just before your payment completed. Your order is cancelled and a full refund will be issued within 5 to 7 days.",
-      );
     }
-    throw e;
+    return "sold_out";
   }
 }
 

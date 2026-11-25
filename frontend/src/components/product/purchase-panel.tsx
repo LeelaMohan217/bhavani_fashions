@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { LoaderCircle, Minus, Plus, Ruler, ShoppingBag } from "lucide-react";
+import { Check, LoaderCircle, Minus, Plus, ShoppingBag } from "lucide-react";
 import type { ProductCard, ProductVariant } from "@/lib/types";
-import { WishlistButton } from "../wishlist-button";
+import { WishlistTextButton } from "../wishlist-button";
+import { ShareButton } from "./share-button";
 import { useCart } from "../cart/cart-provider";
 
 const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL"];
@@ -48,13 +49,13 @@ export function PurchasePanel({ product, variants }: { product: ProductCard; var
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       {colors.length > 0 && (
         <fieldset>
-          <legend className="eyebrow text-stone">
+          <legend className="text-xs text-stone">
             Colour: <span className="text-ink">{color}</span>
           </legend>
-          <div className="mt-4 flex flex-wrap gap-3">
+          <div className="mt-2.5 flex flex-wrap gap-2">
             {colors.map((c) => (
               <button
                 key={c.color}
@@ -66,7 +67,7 @@ export function PurchasePanel({ product, variants }: { product: ProductCard; var
                   setSizeSku(null);
                   setNotice(null);
                 }}
-                className={`size-9 rounded-full p-[3px] ring-1 transition ${
+                className={`size-7 rounded-full p-[2px] ring-1 transition ${
                   c.color === color ? "ring-ink" : "ring-transparent hover:ring-line"
                 }`}
               >
@@ -79,14 +80,8 @@ export function PurchasePanel({ product, variants }: { product: ProductCard; var
 
       {sized && (
         <fieldset>
-          <div className="flex items-center justify-between">
-            <legend className="eyebrow text-stone">Size</legend>
-            <button type="button" className="eyebrow inline-flex items-center gap-1.5 text-ink-soft hover:text-ink">
-              <Ruler className="size-3.5" strokeWidth={1.5} />
-              <span className="link-draw">Size guide</span>
-            </button>
-          </div>
-          <div className="mt-4 grid grid-cols-5 gap-2">
+          <legend className="text-xs text-stone">Size</legend>
+          <div className="mt-2.5 flex flex-wrap gap-2">
             {sizes.map((v) => {
               const out = v.stock === 0;
               const active = v.sku === sizeSku;
@@ -101,7 +96,7 @@ export function PurchasePanel({ product, variants }: { product: ProductCard; var
                     setQty(1);
                     setNotice(null);
                   }}
-                  className={`h-12 border text-sm transition-colors ${
+                  className={`h-9 min-w-10 border px-3 text-xs transition-colors ${
                     active
                       ? "border-ink bg-ink text-canvas"
                       : out
@@ -117,31 +112,41 @@ export function PurchasePanel({ product, variants }: { product: ProductCard; var
         </fieldset>
       )}
 
-      {selected && selected.stock > 0 && selected.stock <= 4 && (
-        <p className="flex items-center gap-2 text-sm text-clay">
-          <span className="size-1.5 rounded-full bg-clay" />
-          Only {selected.stock} left. Handwoven pieces rarely restock.
+      {/* Stock for the chosen colour (and size) */}
+      {!soldOut && (
+        <p className={`flex items-center gap-1.5 text-xs ${selected && selected.stock <= 4 ? "text-clay" : "text-ink-soft"}`}>
+          {selected && selected.stock <= 4 ? (
+            <>
+              <span className="size-1.5 rounded-full bg-clay" />
+              Only {selected.stock} left. Handwoven pieces rarely restock.
+            </>
+          ) : (
+            <>
+              <Check className="size-3.5 text-clay" strokeWidth={1.75} />
+              In stock, ready to dispatch
+            </>
+          )}
         </p>
       )}
 
-      <div className="flex gap-3">
-        <div className="flex h-14 items-center border border-line">
+      <div className="flex gap-2">
+        <div className="flex h-11 items-center border border-line">
           <button
             type="button"
             aria-label="Decrease quantity"
             onClick={() => setQty((q) => Math.max(1, q - 1))}
-            className="inline-flex h-full w-11 items-center justify-center hover:bg-sand"
+            className="inline-flex h-full w-9 items-center justify-center hover:bg-sand"
           >
             <Minus className="size-3.5" strokeWidth={1.5} />
           </button>
-          <span className="w-8 text-center text-sm tabular-nums" aria-live="polite">
+          <span className="w-7 text-center text-sm tabular-nums" aria-live="polite">
             {qty}
           </span>
           <button
             type="button"
             aria-label="Increase quantity"
             onClick={() => setQty((q) => Math.min(maxQty, q + 1))}
-            className="inline-flex h-full w-11 items-center justify-center hover:bg-sand"
+            className="inline-flex h-full w-9 items-center justify-center hover:bg-sand"
           >
             <Plus className="size-3.5" strokeWidth={1.5} />
           </button>
@@ -151,7 +156,7 @@ export function PurchasePanel({ product, variants }: { product: ProductCard; var
           type="button"
           disabled={soldOut || adding}
           onClick={addToBag}
-          className="eyebrow group flex h-14 flex-1 items-center justify-center gap-3 bg-ink text-canvas transition-colors hover:bg-clay-deep disabled:cursor-not-allowed disabled:bg-stone"
+          className="eyebrow group flex h-11 flex-1 items-center justify-center gap-2.5 bg-ink text-[0.65rem] text-canvas transition-colors hover:bg-clay-deep disabled:cursor-not-allowed disabled:bg-stone"
         >
           {adding ? (
             <LoaderCircle className="size-4 animate-spin" strokeWidth={1.5} />
@@ -160,15 +165,18 @@ export function PurchasePanel({ product, variants }: { product: ProductCard; var
           )}
           {soldOut ? "Sold out" : adding ? "Adding…" : "Add to bag"}
         </button>
-
-        <WishlistButton product={product}className="size-14 rounded-none border border-line bg-transparent hover:bg-sand" />
       </div>
 
       {notice && (
-        <p role="status" className="-mt-4 text-sm text-ink-soft">
+        <p role="status" className="-mt-2 text-xs text-ink-soft">
           {notice}
         </p>
       )}
+
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-ink-soft">
+        <WishlistTextButton product={product} className="transition-colors hover:text-ink" />
+        <ShareButton title={product.name} className="transition-colors hover:text-ink" />
+      </div>
     </div>
   );
 }

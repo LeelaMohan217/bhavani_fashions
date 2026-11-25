@@ -2,41 +2,39 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Check, SlidersHorizontal, X } from "lucide-react";
-import type { SortOption } from "@/lib/types";
+import type { ProductFilters, SortOption } from "@/lib/types";
+import { EMPTY_SELECTION, listingHref, selectionCount, type Selection } from "@/lib/shop-filters";
+import { FilterPanel, toggleOption } from "./shop/filter-panel";
 import { SORT_OPTIONS } from "./sort-select";
 
-type Category = { slug: string; name: string };
-
-/** "all", "new", "sale" or a category slug */
-type Show = string;
-
-/** Phone-only filter button + bottom sheet with category and sort options. */
+/**
+ * Phones and tablets: piece count + Filter button. The sheet holds the same filters as the
+ * desktop sidebar plus sort; nothing changes until "Show results".
+ */
 export function FilterSheet({
-  categories,
-  categorySlug,
-  onlyNew,
-  onlySale = false,
+  filters,
+  selection,
+  filter,
   sort,
   total,
 }: {
-  categories: Category[];
-  categorySlug?: string;
-  onlyNew: boolean;
-  onlySale?: boolean;
+  filters: ProductFilters;
+  selection: Selection;
+  filter?: string;
   sort: SortOption;
   total: number;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [pending, startTransition] = useTransition();
-  const current: Show = categorySlug ?? (onlyNew ? "new" : onlySale ? "sale" : "all");
   const [open, setOpen] = useState(false);
-  const [show, setShow] = useState<Show>(current);
+  const [draft, setDraft] = useState<Selection>(selection);
   const [sortBy, setSortBy] = useState<SortOption>(sort);
 
   const openSheet = () => {
-    setShow(current);
+    setDraft(selection);
     setSortBy(sort);
     setOpen(true);
   };
@@ -54,27 +52,15 @@ export function FilterSheet({
   }, [open]);
 
   const apply = () => {
-    const params = new URLSearchParams();
-    if (show === "new" || show === "sale") params.set("filter", show);
-    if (sortBy !== "featured") params.set("sort", sortBy);
-    const path = show === "all" || show === "new" || show === "sale" ? "/shop" : `/shop/${show}`;
-    const qs = params.toString();
     setOpen(false);
-    startTransition(() => router.push(`${path}${qs ? `?${qs}` : ""}`));
+    startTransition(() => router.push(listingHref(pathname, draft, { filter, sort: sortBy }), { scroll: false }));
   };
 
-  // Count of choices that differ from the default view, shown on the button
-  const activeCount = (current !== "all" ? 1 : 0) + (sort !== "featured" ? 1 : 0);
-
-  const showOptions: { value: Show; label: string }[] = [
-    { value: "all", label: "All" },
-    ...categories.map((c) => ({ value: c.slug, label: c.name })),
-    { value: "new", label: "New in" },
-    { value: "sale", label: "Sale" },
-  ];
+  // Shown on the button: filters ticked, plus one if the order isn't the default
+  const activeCount = selectionCount(selection) + (sort !== "featured" ? 1 : 0);
 
   return (
-    <div className="flex w-full items-center justify-between gap-3 md:hidden">
+    <div className="flex w-full items-center justify-between gap-3">
       <p className={`eyebrow text-stone ${pending ? "opacity-60" : ""}`}>
         {total} {total === 1 ? "piece" : "pieces"}
       </p>
@@ -85,7 +71,7 @@ export function FilterSheet({
         className="eyebrow inline-flex items-center gap-2 rounded-full border border-ink px-4 py-2 text-[0.625rem] text-ink"
       >
         <SlidersHorizontal className="size-3.5" strokeWidth={1.5} />
-        Filter
+        Filter &amp; sort
         {activeCount > 0 && (
           <span className="flex size-4 items-center justify-center rounded-full bg-ink text-[0.6rem] tracking-normal text-canvas">
             {activeCount}
@@ -95,9 +81,9 @@ export function FilterSheet({
 
       {open &&
         createPortal(
-          <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Filter and sort">
+          <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Filter and sort">
             <div onClick={() => setOpen(false)} className="absolute inset-0 animate-fade-in bg-ink/30" />
-            <div className="absolute inset-x-0 bottom-0 flex max-h-[85vh] animate-sheet-up flex-col rounded-t-2xl bg-canvas pb-[env(safe-area-inset-bottom)]">
+            <div className="absolute inset-x-0 bottom-0 flex max-h-[88svh] animate-sheet-up flex-col rounded-t-2xl bg-canvas pb-[env(safe-area-inset-bottom)] md:inset-x-auto md:inset-y-0 md:right-0 md:max-h-none md:w-[24rem] md:rounded-none">
               <div className="flex items-center justify-between px-6 pb-2 pt-5">
                 <span className="eyebrow text-ink">Filter &amp; sort</span>
                 <button
@@ -111,32 +97,10 @@ export function FilterSheet({
                 </button>
               </div>
 
-              <div className="overflow-y-auto px-6 pb-4">
-                <fieldset className="mt-3">
-                  <legend className="eyebrow text-stone">Show</legend>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {showOptions.map((o) => {
-                      const active = show === o.value;
-                      return (
-                        <button
-                          key={o.value}
-                          type="button"
-                          aria-pressed={active}
-                          onClick={() => setShow(o.value)}
-                          className={`rounded-full border px-4 py-2 text-sm transition-colors ${
-                            active ? "border-ink bg-ink text-canvas" : "border-line text-ink-soft"
-                          }`}
-                        >
-                          {o.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </fieldset>
-
-                <fieldset className="mt-8">
+              <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-4">
+                <fieldset className="mt-2">
                   <legend className="eyebrow text-stone">Sort by</legend>
-                  <ul className="mt-2">
+                  <ul className="mt-1">
                     {SORT_OPTIONS.map((o) => {
                       const active = sortBy === o.value;
                       return (
@@ -146,7 +110,7 @@ export function FilterSheet({
                             role="radio"
                             aria-checked={active}
                             onClick={() => setSortBy(o.value)}
-                            className={`flex w-full items-center justify-between py-3 text-left text-sm ${
+                            className={`flex w-full items-center justify-between py-2.5 text-left text-sm ${
                               active ? "font-medium text-ink" : "text-ink-soft"
                             }`}
                           >
@@ -158,13 +122,17 @@ export function FilterSheet({
                     })}
                   </ul>
                 </fieldset>
+
+                <div className="mt-6">
+                  <FilterPanel filters={filters} value={draft} onToggle={(k, o) => setDraft((d) => toggleOption(d, k, o))} />
+                </div>
               </div>
 
               <div className="flex gap-3 border-t border-line px-6 py-4">
                 <button
                   type="button"
                   onClick={() => {
-                    setShow("all");
+                    setDraft(EMPTY_SELECTION);
                     setSortBy("featured");
                   }}
                   className="eyebrow flex-1 border border-line py-4 text-ink"

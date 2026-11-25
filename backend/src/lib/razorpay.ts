@@ -45,3 +45,14 @@ export function verifyPaymentSignature(orderId: string, paymentId: string, signa
 }
 
 export const razorpayKeyId = () => credentials().keyId;
+
+/**
+ * Verifies the X-Razorpay-Signature header of a webhook: an HMAC-SHA256 of the exact raw
+ * request body, keyed with the webhook secret (not the API key secret).
+ */
+export function verifyWebhookSignature(rawBody: Buffer, signature: string, secret: string): boolean {
+  const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
+  const a = Buffer.from(expected, "utf8");
+  const b = Buffer.from(signature, "utf8");
+  return a.length === b.length && timingSafeEqual(a, b);
+}

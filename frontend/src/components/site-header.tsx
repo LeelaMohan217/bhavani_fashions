@@ -13,31 +13,28 @@ const iconButton = "size-10 items-center justify-center rounded-full text-ink tr
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-line/80 bg-canvas">
-      {/* Phones: menu and logo on the left, wishlist and bag on the right. md+: logo centred. */}
-      <div className="container-x flex h-[4.5rem] items-center md:grid md:h-20 md:grid-cols-[1fr_auto_1fr]">
+      {/* Logo on the left (after the menu button below desktop), category links centred on desktop,
+          icons on the right. The equal 1fr side columns keep the links truly centred. */}
+      <div className="container-x flex h-[4.5rem] items-center md:grid md:h-[4.5rem] md:grid-cols-[1fr_auto_1fr]">
         <div className="flex items-center gap-1">
           <MobileNav />
-          <div className="md:hidden">
-            <Logo align="start" />
-          </div>
-          <nav aria-label="Main" className="hidden lg:block">
-            <ul className="flex items-center gap-8">
-              {NAV_LINKS.map((l) => (
-                <li key={l.href}>
-                  <Link href={l.href} className="eyebrow link-draw pb-1 text-ink-soft hover:text-ink">
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
+          <Logo align="start" />
         </div>
 
-        <div className="hidden md:block">
-          <Logo />
-        </div>
+        <nav aria-label="Main" className="hidden lg:block">
+          <ul className="flex items-center gap-8">
+            {NAV_LINKS.map((l) => (
+              <li key={l.href}>
+                <Link href={l.href} className="eyebrow link-draw pb-1 text-ink-soft hover:text-ink">
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-        <div className="ml-auto flex items-center justify-end gap-0.5 md:gap-1">
+        {/* Pinned to the last column: on tablets the hidden links would otherwise pull the icons into the middle */}
+        <div className="ml-auto flex items-center justify-end gap-0.5 md:col-start-3 md:gap-1">
           {/* Phones search from the bar below; larger screens use this icon */}
           <SearchButton className={`${iconButton} hidden md:inline-flex`} />
           <WishlistLink className={`${iconButton} inline-flex`} />

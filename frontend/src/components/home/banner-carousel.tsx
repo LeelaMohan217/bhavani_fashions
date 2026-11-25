@@ -56,7 +56,8 @@ export function BannerCarousel({ banners, promotion }: { banners: Banner[]; prom
     <section
       aria-roledescription="carousel"
       aria-label="Offers"
-      className="group/carousel relative md:container-x md:pt-6"
+      // Edge to edge on every screen; the copy inside lines up with the page content
+      className="group/carousel relative"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
@@ -83,7 +84,7 @@ export function BannerCarousel({ banners, promotion }: { banners: Banner[]; prom
 
         {count > 1 && (
           <>
-            <div className="absolute bottom-6 left-6 flex items-center gap-2 md:bottom-7 md:left-12 lg:left-16">
+            <div className="absolute bottom-6 left-6 flex items-center gap-2 md:bottom-7 md:left-12 lg:left-[max(4rem,calc((100vw-90rem)/2+2.5rem))]">
               {slides.map((sl, i) => (
                 <button
                   key={sl.key}
@@ -97,7 +98,7 @@ export function BannerCarousel({ banners, promotion }: { banners: Banner[]; prom
                 </button>
               ))}
             </div>
-            <div className="absolute bottom-5 right-5 hidden gap-2 opacity-0 transition-opacity group-hover/carousel:opacity-100 group-focus-within/carousel:opacity-100 md:flex">
+            <div className="absolute bottom-5 right-5 hidden gap-2 lg:right-[max(1.25rem,calc((100vw-90rem)/2+2.5rem))] opacity-0 transition-opacity group-hover/carousel:opacity-100 group-focus-within/carousel:opacity-100 md:flex">
               <button
                 type="button"
                 onClick={() => go(current - 1)}

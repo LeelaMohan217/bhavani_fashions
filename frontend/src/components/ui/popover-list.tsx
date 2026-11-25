@@ -16,7 +16,8 @@ import { Check } from "lucide-react";
 export type Tone = "store" | "admin";
 
 const LIST: Record<Tone, string> = {
-  store: "border border-line bg-canvas py-1.5 shadow-[0_12px_32px_-12px_rgb(17_17_17/0.25)]",
+  // No vertical padding: the highlighted first/last row reaches the edge instead of leaving a strip
+  store: "border border-line bg-canvas shadow-[0_12px_32px_-12px_rgb(17_17_17/0.25)]",
   admin: "rounded-md border border-neutral-200 bg-white p-1 shadow-lg",
 };
 
