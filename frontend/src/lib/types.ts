@@ -79,6 +79,8 @@ export type Banner = {
   ctaHref: string;
   imageUrl: string;
   imageAlt: string;
+  /** Side of the photo the text sits on (tablet and desktop) */
+  textSide: "LEFT" | "RIGHT";
 };
 
 export type SortOption = "featured" | "newest" | "price-asc" | "price-desc";

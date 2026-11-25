@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "banner-images": "node scripts/banner-images.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.79.0",

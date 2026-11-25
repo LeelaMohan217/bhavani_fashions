@@ -247,12 +247,19 @@ model Banner {
   ctaHref   String
   imageUrl  String
   imageAlt  String   @default("")
+  /// Which side of the photo the text sits on (tablet and desktop); pick the side without the model
+  textSide  BannerTextSide @default(LEFT)
   sortOrder Int      @default(0)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([isActive, sortOrder])
+}
+
+enum BannerTextSide {
+  LEFT
+  RIGHT
 }
 
 /// A store-wide percentage-off promotion (e.g. Black Friday). Applied to every live product's

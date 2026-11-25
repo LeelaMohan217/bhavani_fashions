@@ -12,6 +12,9 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
+    // Unsplash and Cloudinary resize on their own CDNs (faster, and no Vercel image quota)
+    loader: "custom",
+    loaderFile: "./src/lib/image-loader.ts",
     remotePatterns: [
       // Placeholder photography until the client's own images are on Cloudinary
       // Keep in sync with IMAGE_HOSTS in backend/src/services/admin-products.ts

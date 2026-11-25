@@ -4,6 +4,17 @@ import { notFound } from "../lib/http-error.js";
 
 // Must match images.remotePatterns in frontend/next.config.ts
 const IMAGE_HOSTS = ["images.unsplash.com", "res.cloudinary.com"];
+/** A photo shipped with the storefront in public/banners (sized copies made by `npm run banner-images`) */
+const STORE_PHOTO = /^\/banners\/[a-z0-9-]+\.(?:jpe?g|png)$/i;
+
+function isHostedImage(u: string) {
+  try {
+    const url = new URL(u);
+    return url.protocol === "https:" && IMAGE_HOSTS.includes(url.hostname);
+  } catch {
+    return false;
+  }
+}
 
 const optionalText = (max: number) =>
   z
@@ -26,10 +37,14 @@ export const BannerInput = z.object({
     // rejected because browsers treat them as links to another website.
     .regex(/^\/(?![/\\])[^\s\\]*$/, "Use a link on this store that starts with /, e.g. /shop/sarees"),
   imageUrl: z
-    .url("Enter a valid image URL")
-    .refine((u) => u.startsWith("https://"), "Image URL must start with https://")
-    .refine((u) => IMAGE_HOSTS.includes(new URL(u).hostname), `Images must be hosted on ${IMAGE_HOSTS.join(" or ")}`),
+    .string()
+    .trim()
+    .refine(
+      (u) => STORE_PHOTO.test(u) || isHostedImage(u),
+      `Use a store photo like /banners/navy-silk-saree.jpg, or a link from ${IMAGE_HOSTS.join(" or ")}`,
+    ),
   imageAlt: z.string().trim().max(160).default(""),
+  textSide: z.enum(["LEFT", "RIGHT"]).default("LEFT"),
   isActive: z.boolean().default(true),
 });
 
@@ -43,6 +58,7 @@ const publicSelect = {
   ctaHref: true,
   imageUrl: true,
   imageAlt: true,
+  textSide: true,
 } as const;
 
 /** Live banners for the storefront, in display order */

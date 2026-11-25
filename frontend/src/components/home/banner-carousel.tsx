@@ -83,7 +83,7 @@ export function BannerCarousel({ banners, promotion }: { banners: Banner[]; prom
 
         {count > 1 && (
           <>
-            <div className="absolute bottom-6 left-6 flex items-center gap-2 md:bottom-8 md:left-14">
+            <div className="absolute bottom-6 left-6 flex items-center gap-2 md:bottom-7 md:left-12 lg:left-16">
               {slides.map((sl, i) => (
                 <button
                   key={sl.key}

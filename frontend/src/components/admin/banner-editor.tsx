@@ -11,6 +11,9 @@ import { Card, btn, inputCls } from "./ui";
 
 // Must match the API and images.remotePatterns in next.config.ts
 const IMAGE_HOSTS = ["images.unsplash.com", "res.cloudinary.com"];
+/** Photos shipped with the storefront in public/banners */
+const STORE_PHOTO = /^\/banners\/[a-z0-9-]+\.(?:jpe?g|png)$/i;
+const STORE_PHOTOS = ["/banners/navy-silk-saree.jpg", "/banners/pink-half-saree.jpg", "/banners/festive-silk-sarees.jpg"];
 
 /** Pages a banner button usually points to */
 const LINKS = ["/shop", "/shop/sarees", "/shop/lehengas", "/shop/kurta-sets", "/shop?filter=new", "/shop?filter=sale"];
@@ -24,6 +27,7 @@ const EMPTY: BannerPayload = {
   ctaHref: "/shop",
   imageUrl: "",
   imageAlt: "",
+  textSide: "LEFT",
   isActive: true,
 };
 
@@ -36,11 +40,15 @@ const fromBanner = (b: AdminBanner): BannerPayload => ({
   ctaHref: b.ctaHref,
   imageUrl: b.imageUrl,
   imageAlt: b.imageAlt,
+  textSide: b.textSide,
   isActive: b.isActive,
 });
 
 function imageProblem(url: string): string | null {
   if (!url.trim()) return null;
+  if (url.trim().startsWith("/")) {
+    return STORE_PHOTO.test(url.trim()) ? null : "Store photos look like /banners/navy-silk-saree.jpg";
+  }
   try {
     const u = new URL(url.trim());
     if (u.protocol !== "https:") return "The link must start with https://";
@@ -148,16 +156,48 @@ export function BannerEditor({ banner }: { banner?: AdminBanner }) {
             <div className="space-y-4">
               <div>
                 <Label htmlFor="imageUrl">Photo link</Label>
-                <input {...field("imageUrl")} type="url" inputMode="url" placeholder="https://images.unsplash.com/…" className={inputCls} />
+                <SuggestInput
+                  id="imageUrl"
+                  value={form.imageUrl}
+                  onChange={(e) => set("imageUrl", e.target.value)}
+                  onPick={(v) => set("imageUrl", v)}
+                  suggestions={STORE_PHOTOS}
+                  placeholder="/banners/navy-silk-saree.jpg or https://images.unsplash.com/…"
+                  aria-invalid={Boolean(errors.imageUrl) || undefined}
+                  className={inputCls}
+                />
                 {err("imageUrl") ??
                   (imgProblem ? (
                     <p className="mt-1.5 text-xs text-amber-700">{imgProblem}</p>
                   ) : (
                     <p className="mt-1.5 text-xs text-neutral-500">
-                      Use a wide, bright photo with the person on the right. The text sits on the left on computers and at the
-                      bottom on phones.
+                      Pick a store photo or paste a link. Wide photos work best. On phones the middle of the photo shows,
+                      with the text at the bottom.
                     </p>
                   ))}
+              </div>
+              <div>
+                <span className="mb-1.5 block text-sm font-medium text-neutral-800">Text sits on</span>
+                <div role="radiogroup" aria-label="Text sits on" className="inline-flex rounded-md bg-neutral-100 p-0.5 text-xs font-medium">
+                  {(
+                    [
+                      ["LEFT", "Left"],
+                      ["RIGHT", "Right"],
+                    ] as const
+                  ).map(([v, label]) => (
+                    <button
+                      key={v}
+                      type="button"
+                      role="radio"
+                      aria-checked={form.textSide === v}
+                      onClick={() => set("textSide", v)}
+                      className={`rounded px-3 py-1.5 ${form.textSide === v ? "bg-white text-neutral-900 shadow-xs" : "text-neutral-500 hover:text-neutral-900"}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-1.5 text-xs text-neutral-500">On computers and tablets. Choose the side without the model.</p>
               </div>
               <div>
                 <Label htmlFor="imageAlt" hint="Optional">

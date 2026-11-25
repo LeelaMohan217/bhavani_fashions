@@ -170,6 +170,7 @@ export type AdminBanner = {
   ctaHref: string;
   imageUrl: string;
   imageAlt: string;
+  textSide: "LEFT" | "RIGHT";
   sortOrder: number;
   isActive: boolean;
   createdAt: string;
@@ -185,6 +186,7 @@ export type BannerPayload = {
   ctaHref: string;
   imageUrl: string;
   imageAlt: string;
+  textSide: "LEFT" | "RIGHT";
   isActive: boolean;
 };
 
