@@ -28,6 +28,8 @@ export function FilterPanel({
   const ticked = (key: FilterKey, v: string) => value[key].some((s) => s.toLowerCase() === v.toLowerCase());
 
   const sections: { key: FilterKey; title: string; options: Option[] }[] = [
+    // Subcategories (only on category pages that have them)
+    { key: "type", title: "Type", options: (filters.types ?? []).map((t) => ({ value: t.slug, label: t.name, count: t.count })) },
     { key: "price", title: "Price", options: PRICE_RANGES.map((r) => ({ value: r.key, label: r.label })) },
     { key: "occasion", title: "Occasion", options: filters.occasions.map((o) => ({ value: o.name, label: o.name, count: o.count })) },
     { key: "color", title: "Colour", options: filters.colors.map((c) => ({ value: c.name, label: c.name, count: c.count, hex: c.hex })) },

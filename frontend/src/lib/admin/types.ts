@@ -2,12 +2,58 @@ import type { OrderStatus, PaymentMethod, PaymentStatus } from "../types";
 
 export type Admin = { id: string; name: string; email: string };
 
+/** Admin → Low stock */
+export type LowStockList = {
+  threshold: number;
+  counts: { soldOut: number; low: number; total: number };
+  items: {
+    id: string;
+    sku: string;
+    color: string;
+    size: string | null;
+    stock: number;
+    product: { id: string; name: string; category: { name: string } };
+  }[];
+};
+
+export type BestSellerPeriod = "this-month" | "last-month" | "all";
+
+/** Admin → Best sellers (amounts in paise) */
+export type BestSellers = {
+  period: BestSellerPeriod;
+  from: string | null;
+  to: string | null;
+  totals: { units: number; revenue: number; orders: number; products: number };
+  items: {
+    key: string;
+    productId: string | null;
+    name: string;
+    slug: string;
+    category: string | null;
+    image: string | null;
+    isActive: boolean;
+    units: number;
+    revenue: number;
+    orders: number;
+  }[];
+};
+
+/** A row in Admin → Admin Accounts (everyone has the Admin role) */
+export type AdminAccount = Admin & {
+  isActive: boolean;
+  lastLoginAt: string | null;
+  createdAt: string;
+  isYou: boolean;
+};
+
 export type Dashboard = {
   today: { orders: number; revenue: number };
   last30: { orders: number; revenue: number };
   toFulfil: number;
   paymentSplit: { cod: { orders: number; revenue: number }; prepaid: { orders: number; revenue: number } };
   lowStockCount: number;
+  /** Variants with no pieces left (part of lowStockCount) */
+  soldOutCount?: number;
   lowStock: {
     id: string;
     sku: string;
@@ -79,6 +125,8 @@ export type AdminOrder = {
   subtotal: number;
   shippingFee: number;
   codFee: number;
+  discount: number;
+  couponCode: string | null;
   total: number;
   razorpayOrderId: string | null;
   razorpayPaymentId: string | null;
@@ -150,7 +198,33 @@ export type AdminProduct = {
   variants: AdminVariant[];
 };
 
-export type AdminCategory = { id: string; name: string; slug: string };
+export type AdminCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  tagline: string | null;
+  description: string | null;
+  imageUrl: string | null;
+  /** Set for subcategories */
+  parentId: string | null;
+  isActive: boolean;
+  sortOrder: number;
+  /** Products directly in this category (not counting subcategories) */
+  productCount: number;
+  childCount: number;
+};
+
+export type AdminCategoryDetail = AdminCategory & { parent: { id: string; name: string } | null };
+
+export type CategoryPayload = {
+  name: string;
+  slug: string;
+  tagline: string;
+  description: string;
+  imageUrl: string;
+  parentId: string | null;
+  isActive: boolean;
+};
 
 /** Payload sent when saving a product (prices in paise) */
 export type ProductPayload = Omit<AdminProduct, "id" | "fabric" | "occasion" | "care" | "slug"> & {
@@ -200,3 +274,90 @@ export type AdminPromotion = {
 };
 
 export type PromotionPayload = { name: string; percentOff: number; endsAt: string; isActive: boolean };
+
+// ─── Customers ───────────────────────────────────────────────────────────────
+
+export type CustomerSort = "recent" | "spent" | "orders";
+
+export type AdminCustomerList = {
+  items: { phone: string; name: string; email: string; city: string; state: string; orders: number; spent: number; lastOrderAt: string }[];
+  total: number;
+  page: number;
+  totalPages: number;
+};
+
+export type AdminCustomer = {
+  phone: string;
+  name: string;
+  email: string;
+  address: { line1: string; line2: string | null; city: string; state: string; pincode: string };
+  orders: number;
+  spent: number;
+  pieces: number;
+  firstOrderAt: string;
+  lastOrderAt: string;
+  history: {
+    id: string;
+    number: string;
+    createdAt: string;
+    status: OrderStatus;
+    paymentMethod: PaymentMethod;
+    paymentStatus: PaymentStatus;
+    total: number;
+    pieces: number;
+  }[];
+};
+
+// ─── Coupons ─────────────────────────────────────────────────────────────────
+
+export type CouponType = "PERCENT" | "FLAT";
+export type CouponState = "active" | "scheduled" | "expired" | "used-up" | "off";
+export type CouponShow = "all" | "active" | "scheduled" | "ended";
+
+export type AdminCoupon = {
+  id: string;
+  code: string;
+  description: string | null;
+  type: CouponType;
+  /** Percent, or paise for FLAT */
+  value: number;
+  minOrder: number;
+  maxDiscount: number | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  usageLimit: number | null;
+  usedCount: number;
+  isActive: boolean;
+  createdAt: string;
+  state: CouponState;
+  /** e.g. "10% off up to ₹500" */
+  label: string;
+};
+
+export type AdminCouponList = { counts: Record<CouponShow, number>; items: AdminCoupon[] };
+
+export type CouponPayload = {
+  code: string;
+  description: string | null;
+  type: CouponType;
+  value: number;
+  minOrder: number;
+  maxDiscount: number | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  usageLimit: number | null;
+  isActive: boolean;
+};
+
+// ─── Activity log ────────────────────────────────────────────────────────────
+
+export const ACTIVITY_AREAS = ["order", "product", "category", "banner", "coupon", "offer", "account", "profile"] as const;
+export type ActivityArea = (typeof ACTIVITY_AREAS)[number];
+
+export type ActivityList = {
+  items: { id: string; adminId: string | null; adminName: string; area: ActivityArea; summary: string; href: string | null; createdAt: string }[];
+  total: number;
+  page: number;
+  totalPages: number;
+  admins: { id: string; name: string }[];
+};

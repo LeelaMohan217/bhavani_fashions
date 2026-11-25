@@ -79,6 +79,7 @@ async function OrderContent({ params }: Pick<PageProps<"/admin/orders/[id]">, "p
             </ul>
             <dl className="space-y-2 border-t border-neutral-100 px-5 py-4 text-sm">
               <Row label="Subtotal" value={formatPrice(o.subtotal)} />
+              {o.discount > 0 && <Row label={`Coupon ${o.couponCode ?? ""}`} value={`−${formatPrice(o.discount)}`} />}
               <Row label="Shipping" value={o.shippingFee ? formatPrice(o.shippingFee) : "Free"} />
               {o.codFee > 0 && <Row label="COD fee" value={formatPrice(o.codFee)} />}
               <div className="flex justify-between border-t border-neutral-100 pt-2 font-semibold">

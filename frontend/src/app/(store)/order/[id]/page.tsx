@@ -72,6 +72,7 @@ async function Order({ params }: Pick<PageProps<"/order/[id]">, "params">) {
             </dl>
             <dl className="mt-6 space-y-3 border-t border-ink/10 pt-6 text-sm">
               <Row label="Subtotal" value={formatPrice(order.subtotal)} />
+              {order.discount > 0 && <Row label={`Discount · ${order.couponCode ?? ""}`} value={`−${formatPrice(order.discount)}`} />}
               <Row label="Shipping" value={order.shippingFee === 0 ? "Free" : formatPrice(order.shippingFee)} />
               {order.codFee > 0 && <Row label="Cash on delivery fee" value={formatPrice(order.codFee)} />}
               <div className="flex items-baseline justify-between border-t border-ink/10 pt-4">

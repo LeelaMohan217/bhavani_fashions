@@ -5,7 +5,21 @@ import { redirect } from "next/navigation";
 import { updateTag } from "next/cache";
 import type { ActionResult, OrderStatus } from "../types";
 import { ADMIN_COOKIE, API_URL, AdminApiError, adminFetch } from "./api";
-import type { AdminBanner, AdminOrder, AdminProduct, AdminPromotion, BannerPayload, ProductPayload, PromotionPayload } from "./types";
+import type {
+  AdminAccount,
+  AdminBanner,
+  AdminCategory,
+  AdminCategoryDetail,
+  AdminOrder,
+  AdminProduct,
+  AdminPromotion,
+  BannerPayload,
+  CategoryPayload,
+  AdminCoupon,
+  CouponPayload,
+  ProductPayload,
+  PromotionPayload,
+} from "./types";
 
 function fail(e: unknown): { ok: false; error: string; fieldErrors?: Record<string, string> } {
   // redirect() works by throwing — let it through
@@ -100,6 +114,7 @@ export async function saveProduct(
       method: id ? "PUT" : "POST",
       body: payload,
     });
+    updateTag("catalogue"); // the store shows the change straight away
     return { ok: true, product };
   } catch (e) {
     return fail(e);
@@ -112,7 +127,110 @@ export async function setProductActive(id: string, isActive: boolean): Promise<A
       method: "PATCH",
       body: { isActive },
     });
+    updateTag("catalogue");
     return { ok: true, isActive: res.isActive };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+// ─── Profile and admin accounts ──────────────────────────────────────────────
+
+export async function updateProfile(payload: { name: string; email: string }): Promise<ActionResult<{ admin: AdminAccount }>> {
+  try {
+    const admin = await adminFetch<AdminAccount>("/profile", { method: "PUT", body: payload });
+    return { ok: true, admin };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function changePassword(payload: { currentPassword: string; newPassword: string }): Promise<ActionResult<object>> {
+  try {
+    await adminFetch("/profile/password", { method: "POST", body: payload });
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function createAdmin(payload: { name: string; email: string; password: string }): Promise<ActionResult<{ admin: AdminAccount }>> {
+  try {
+    const admin = await adminFetch<AdminAccount>("/accounts", { method: "POST", body: payload });
+    return { ok: true, admin };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function setAdminActive(id: string, isActive: boolean): Promise<ActionResult<object>> {
+  try {
+    await adminFetch(`/accounts/${encodeURIComponent(id)}/status`, { method: "PATCH", body: { isActive } });
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function resetAdminPassword(id: string, password: string): Promise<ActionResult<object>> {
+  try {
+    await adminFetch(`/accounts/${encodeURIComponent(id)}/password`, { method: "POST", body: { password } });
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function deleteAdmin(id: string): Promise<ActionResult<object>> {
+  try {
+    await adminFetch(`/accounts/${encodeURIComponent(id)}`, { method: "DELETE" });
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+// ─── Categories ──────────────────────────────────────────────────────────────
+// Each change refreshes the storefront's cached catalogue straight away.
+
+export async function saveCategory(id: string | null, payload: CategoryPayload): Promise<ActionResult<{ category: AdminCategoryDetail }>> {
+  try {
+    const category = await adminFetch<AdminCategoryDetail>(id ? `/categories/${encodeURIComponent(id)}` : "/categories", {
+      method: id ? "PUT" : "POST",
+      body: payload,
+    });
+    updateTag("catalogue");
+    return { ok: true, category };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function setCategoryActive(id: string, isActive: boolean): Promise<ActionResult<{ isActive: boolean }>> {
+  try {
+    const res = await adminFetch<AdminCategoryDetail>(`/categories/${encodeURIComponent(id)}/status`, { method: "PATCH", body: { isActive } });
+    updateTag("catalogue");
+    return { ok: true, isActive: res.isActive };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function deleteCategory(id: string): Promise<ActionResult<object>> {
+  try {
+    await adminFetch(`/categories/${encodeURIComponent(id)}`, { method: "DELETE" });
+    updateTag("catalogue");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function reorderCategories(ids: string[]): Promise<ActionResult<{ categories: AdminCategory[] }>> {
+  try {
+    const categories = await adminFetch<AdminCategory[]>("/categories/order", { method: "PUT", body: { ids } });
+    updateTag("catalogue");
+    return { ok: true, categories };
   } catch (e) {
     return fail(e);
   }
@@ -173,6 +291,38 @@ export async function savePromotion(payload: PromotionPayload): Promise<ActionRe
     updateTag("promotion");
     updateTag("catalogue");
     return { ok: true, promotion };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+// ─── Coupons ─────────────────────────────────────────────────────────────────
+
+export async function saveCoupon(id: string | null, payload: CouponPayload): Promise<ActionResult<{ coupon: AdminCoupon }>> {
+  try {
+    const coupon = await adminFetch<AdminCoupon>(id ? `/coupons/${encodeURIComponent(id)}` : "/coupons", {
+      method: id ? "PUT" : "POST",
+      body: payload,
+    });
+    return { ok: true, coupon };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function setCouponActive(id: string, isActive: boolean): Promise<ActionResult<{ coupon: AdminCoupon }>> {
+  try {
+    const coupon = await adminFetch<AdminCoupon>(`/coupons/${encodeURIComponent(id)}/status`, { method: "PATCH", body: { isActive } });
+    return { ok: true, coupon };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function deleteCoupon(id: string): Promise<ActionResult<object>> {
+  try {
+    await adminFetch(`/coupons/${encodeURIComponent(id)}`, { method: "DELETE" });
+    return { ok: true };
   } catch (e) {
     return fail(e);
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -14,12 +14,13 @@ import {
   Lock,
   ShieldCheck,
   Smartphone,
+  Tag,
 } from "lucide-react";
-import { placeOrder, verifyPayment, type CheckoutForm as FormValues } from "@/lib/cart-actions";
+import { applyCoupon, placeOrder, verifyPayment, type CheckoutForm as FormValues } from "@/lib/cart-actions";
 import { formatPrice } from "@/lib/format";
 import { Select } from "@/components/ui/select";
 import { INDIAN_STATES } from "@/lib/india";
-import type { Cart, CheckoutConfig, PaymentMethod } from "@/lib/types";
+import type { AppliedCoupon, Cart, CheckoutConfig, PaymentMethod } from "@/lib/types";
 import { useCart } from "../cart/cart-provider";
 import { openRazorpay } from "./razorpay";
 import { CheckoutSkeleton } from "../skeletons";
@@ -47,9 +48,13 @@ export function CheckoutForm({ config }: { config: CheckoutConfig }) {
   const [stage, setStage] = useState<"idle" | "placing" | "paying" | "verifying">("idle");
   const formRef = useRef<HTMLFormElement>(null);
 
+  const [coupon, setCoupon] = useState<AppliedCoupon | null>(null);
+
   const busy = stage !== "idle";
   const codFee = method === "COD" ? config.codFee : 0;
-  const total = (cart?.subtotal ?? 0) + config.shippingFee + codFee;
+  const discount = coupon?.discount ?? 0;
+  const total = (cart?.subtotal ?? 0) - discount + config.shippingFee + codFee;
+  const couponProps = { coupon, onApply: setCoupon, onRemove: () => setCoupon(null), disabled: busy };
 
   const set = (name: keyof typeof EMPTY) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setValues((v) => ({ ...v, [name]: e.target.value }));
@@ -67,7 +72,7 @@ export function CheckoutForm({ config }: { config: CheckoutConfig }) {
     setErrors({});
     setStage("placing");
 
-    const res = await placeOrder({ ...values, paymentMethod: method });
+    const res = await placeOrder({ ...values, paymentMethod: method, couponCode: coupon?.code });
     if (!res.ok) {
       setStage("idle");
       setFormError(res.fieldErrors ? "Please check the highlighted details." : res.error);
@@ -149,7 +154,7 @@ export function CheckoutForm({ config }: { config: CheckoutConfig }) {
           <span className="display text-xl tabular-nums">{formatPrice(total)}</span>
         </summary>
         <div className="pb-6">
-          <Summary cart={cart} codFee={codFee} total={total} />
+          <Summary cart={cart} codFee={codFee} total={total} {...couponProps} />
         </div>
       </details>
 
@@ -270,7 +275,7 @@ export function CheckoutForm({ config }: { config: CheckoutConfig }) {
           <div className="sticky top-28 bg-sand p-8">
             <h2 className="eyebrow">Order summary</h2>
             <div className="mt-6">
-              <Summary cart={cart} codFee={codFee} total={total} />
+              <Summary cart={cart} codFee={codFee} total={total} {...couponProps} />
             </div>
           </div>
         </aside>
@@ -367,7 +372,106 @@ function PaymentOption({
   );
 }
 
-function Summary({ cart, codFee, total }: { cart: Cart; codFee: number; total: number }) {
+type CouponProps = {
+  coupon: AppliedCoupon | null;
+  onApply: (c: AppliedCoupon) => void;
+  onRemove: () => void;
+  disabled: boolean;
+};
+
+/** "Have a code?" link that opens into a slim input with Apply; once applied, shows the code with Remove. */
+function CouponField({ coupon, onApply, onRemove, disabled }: CouponProps) {
+  const [open, setOpen] = useState(false);
+  const [code, setCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+
+  if (coupon) {
+    return (
+      <div className="flex items-center justify-between gap-3 border border-dashed border-ink/25 px-3 py-2 text-sm">
+        <span className="inline-flex min-w-0 items-center gap-2">
+          <Tag className="size-3.5 shrink-0 text-clay" strokeWidth={1.5} />
+          <span className="font-medium tracking-wide">{coupon.code}</span>
+          <span className="truncate text-xs text-stone">{coupon.label}</span>
+        </span>
+        <button type="button" disabled={disabled} onClick={onRemove} className="text-xs text-stone underline-offset-2 hover:text-ink hover:underline">
+          Remove
+        </button>
+      </div>
+    );
+  }
+
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)} className="inline-flex items-center gap-2 text-xs text-ink-soft underline-offset-2 hover:text-ink hover:underline">
+        <Tag className="size-3.5" strokeWidth={1.5} /> Have a discount code?
+      </button>
+    );
+  }
+
+  const apply = () => {
+    if (!code.trim()) return;
+    setError(null);
+    start(async () => {
+      const res = await applyCoupon(code.trim());
+      if (res.ok) {
+        onApply(res.coupon);
+        setCode("");
+        setOpen(false);
+      } else setError(res.error);
+    });
+  };
+
+  return (
+    <div>
+      <div className="flex">
+        <label htmlFor="coupon" className="sr-only">
+          Discount code
+        </label>
+        <input
+          id="coupon"
+          value={code}
+          onChange={(e) => {
+            setCode(e.target.value.toUpperCase());
+            setError(null);
+          }}
+          onKeyDown={(e) => {
+            // Enter applies the code instead of submitting the whole checkout form
+            if (e.key === "Enter") {
+              e.preventDefault();
+              apply();
+            }
+          }}
+          autoFocus
+          autoComplete="off"
+          placeholder="Discount code"
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? "coupon-error" : undefined}
+          className={`h-10 min-w-0 flex-1 border border-r-0 bg-transparent px-3 text-sm uppercase tracking-wide placeholder:normal-case placeholder:tracking-normal placeholder:text-stone/60 focus:border-ink focus:outline-none ${
+            error ? "border-clay" : "border-line"
+          }`}
+        />
+        <button
+          type="button"
+          onClick={apply}
+          disabled={pending || disabled || !code.trim()}
+          className="eyebrow inline-flex h-10 items-center gap-2 bg-ink px-4 text-canvas transition-colors hover:bg-clay-deep disabled:bg-stone"
+        >
+          {pending && <LoaderCircle className="size-3.5 animate-spin" strokeWidth={1.5} />}
+          Apply
+        </button>
+      </div>
+      {error && (
+        <p id="coupon-error" role="alert" className="mt-1.5 text-xs text-clay">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function Summary({ cart, codFee, total, ...couponProps }: { cart: Cart; codFee: number; total: number } & CouponProps) {
+  const { coupon } = couponProps;
   return (
     <>
       <ul className="space-y-5">
@@ -394,11 +498,21 @@ function Summary({ cart, codFee, total }: { cart: Cart; codFee: number; total: n
         ))}
       </ul>
 
-      <dl className="mt-7 space-y-3 border-t border-ink/10 pt-6 text-sm">
+      <div className="mt-6 border-t border-ink/10 pt-5">
+        <CouponField {...couponProps} />
+      </div>
+
+      <dl className="mt-5 space-y-3 border-t border-ink/10 pt-5 text-sm">
         <div className="flex justify-between">
           <dt className="text-ink-soft">Subtotal</dt>
           <dd className="tabular-nums">{formatPrice(cart.subtotal)}</dd>
         </div>
+        {coupon && (
+          <div className="flex justify-between">
+            <dt className="text-ink-soft">Discount · {coupon.code}</dt>
+            <dd className="tabular-nums text-clay">−{formatPrice(coupon.discount)}</dd>
+          </div>
+        )}
         <div className="flex justify-between">
           <dt className="text-ink-soft">Shipping</dt>
           <dd className="text-clay">Free</dd>

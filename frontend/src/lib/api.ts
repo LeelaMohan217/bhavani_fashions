@@ -55,6 +55,8 @@ export type ProductQuery = {
   sale?: boolean;
   /** Any of these occasions, e.g. ["Wedding", "Festive"] */
   occasion?: string[];
+  /** Any of these subcategories (slugs) */
+  type?: string[];
   /** Any of these colours / fabrics */
   color?: string[];
   fabric?: string[];
@@ -77,6 +79,7 @@ export async function getProducts(query: ProductQuery = {}): Promise<ProductList
   if (query.isNew !== undefined) params.set("new", String(query.isNew));
   if (query.sale) params.set("sale", "true");
   if (query.occasion?.length) params.set("occasion", query.occasion.join(","));
+  if (query.type?.length) params.set("type", query.type.join(","));
   if (query.color?.length) params.set("color", query.color.join(","));
   if (query.fabric?.length) params.set("fabric", query.fabric.join(","));
   if (query.price?.length) params.set("price", query.price.map((b) => `${b.min ?? ""}-${b.max ?? ""}`).join(","));

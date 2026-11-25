@@ -4,15 +4,28 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type {
   Admin,
+  AdminAccount,
   AdminAlerts,
+  BestSellerPeriod,
+  BestSellers,
+  LowStockList,
   AdminBanner,
   AdminPromotion,
   AdminCategory,
+  AdminCategoryDetail,
   AdminOrder,
   AdminOrderList,
   AdminProduct,
   AdminProductList,
   Dashboard,
+  ActivityArea,
+  ActivityList,
+  AdminCoupon,
+  AdminCouponList,
+  AdminCustomer,
+  AdminCustomerList,
+  CouponShow,
+  CustomerSort,
 } from "./types";
 
 export const API_URL = process.env.API_URL ?? "http://localhost:4000";
@@ -63,9 +76,48 @@ const qs = (params: Record<string, string | number | undefined>) => {
 };
 
 export const getMe = () => adminFetch<Admin>("/auth/me");
+export const getAccounts = () => adminFetch<AdminAccount[]>("/accounts");
+export const getLowStock = (show: "all" | "sold-out" | "low" = "all") => adminFetch<LowStockList>(`/low-stock${qs({ show })}`);
+export const getBestSellers = (q: { period?: BestSellerPeriod; sort?: "units" | "revenue"; category?: string; limit?: number }) =>
+  adminFetch<BestSellers>(`/insights/best-sellers${qs(q)}`);
+export const getCustomers = (q: { search?: string; sort?: CustomerSort; page?: number; pageSize?: number }) =>
+  adminFetch<AdminCustomerList>(`/customers${qs(q)}`);
+
+export async function getCustomer(phone: string): Promise<AdminCustomer | null> {
+  try {
+    return await adminFetch<AdminCustomer>(`/customers/${encodeURIComponent(phone)}`);
+  } catch (e) {
+    if (e instanceof AdminApiError && e.status === 404) return null;
+    throw e;
+  }
+}
+
+export const getCoupons = (show: CouponShow = "all") => adminFetch<AdminCouponList>(`/coupons${qs({ show })}`);
+
+export async function getCoupon(id: string): Promise<AdminCoupon | null> {
+  try {
+    return await adminFetch<AdminCoupon>(`/coupons/${encodeURIComponent(id)}`);
+  } catch (e) {
+    if (e instanceof AdminApiError && e.status === 404) return null;
+    throw e;
+  }
+}
+
+export const getActivity = (q: { area?: ActivityArea; admin?: string; page?: number; pageSize?: number }) =>
+  adminFetch<ActivityList>(`/activity${qs(q)}`);
+
 export const getDashboard = () => adminFetch<Dashboard>("/dashboard");
 export const getAlerts = () => adminFetch<AdminAlerts>("/alerts");
 export const getCategories = () => adminFetch<AdminCategory[]>("/categories");
+
+export async function getCategory(id: string): Promise<AdminCategoryDetail | null> {
+  try {
+    return await adminFetch<AdminCategoryDetail>(`/categories/${encodeURIComponent(id)}`);
+  } catch (e) {
+    if (e instanceof AdminApiError && e.status === 404) return null;
+    throw e;
+  }
+}
 
 export const getOrders = (q: { status?: string; search?: string; payment?: string; page?: number; pageSize?: number }) =>
   adminFetch<AdminOrderList>(`/orders${qs(q)}`);

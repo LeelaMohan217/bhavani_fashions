@@ -3,18 +3,40 @@
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ExternalLink, GalleryHorizontalEnd, LayoutDashboard, LifeBuoy, MoreHorizontal, PanelLeftClose, PanelLeftOpen, Receipt, Settings, Shirt, X } from "lucide-react";
+import { AlertTriangle, ExternalLink, FolderTree, History, TicketPercent, Users, GalleryHorizontalEnd, TrendingUp, LayoutDashboard, LifeBuoy, MoreHorizontal, PanelLeftClose, PanelLeftOpen, Receipt, Settings, Shirt, X } from "lucide-react";
 import type { Admin, AdminAlerts } from "@/lib/admin/types";
 import { TopBar } from "./top-bar";
+import { SilkMothMark } from "../logo";
 
-const NAV = [
+type BadgeKey = "toFulfil" | "lowStock";
+type Counts = Record<BadgeKey, number>;
+/** What a count means, for tooltips and screen readers */
+const BADGE_HINT: Record<BadgeKey, string> = { toFulfil: "to fulfil", lowStock: "running low" };
+
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  exact?: boolean;
+  badgeKey?: BadgeKey;
+  /** Phones: lives in the "More" sheet instead of the bottom bar */
+  phoneMore?: boolean;
+};
+
+const NAV: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/admin/orders", label: "Orders", icon: Receipt, badgeKey: "toFulfil" as const },
+  { href: "/admin/orders", label: "Orders", icon: Receipt, badgeKey: "toFulfil" },
+  { href: "/admin/customers", label: "Customers", icon: Users, phoneMore: true },
   { href: "/admin/products", label: "Products", icon: Shirt },
+  { href: "/admin/low-stock", label: "Low stock", icon: AlertTriangle, badgeKey: "lowStock", phoneMore: true },
+  { href: "/admin/categories", label: "Categories", icon: FolderTree },
+  { href: "/admin/coupons", label: "Coupons", icon: TicketPercent, phoneMore: true },
+  { href: "/admin/insights", label: "Best sellers", icon: TrendingUp },
   { href: "/admin/banners", label: "Banners", icon: GalleryHorizontalEnd },
 ];
 
-const FOOTER_NAV = [
+const FOOTER_NAV: NavItem[] = [
+  { href: "/admin/activity", label: "Activity log", icon: History },
   { href: "/admin/settings", label: "Settings", icon: Settings },
   { href: "/admin/help", label: "Help & Support", icon: LifeBuoy },
 ];
@@ -57,7 +79,7 @@ function useCollapsed() {
 // ─── Shell ───────────────────────────────────────────────────────────────────
 
 export function AdminShell({ admin, alerts, children }: { admin: Admin; alerts: AdminAlerts; children: React.ReactNode }) {
-  const toFulfil = alerts.toFulfilCount;
+  const counts: Counts = { toFulfil: alerts.toFulfilCount, lowStock: alerts.lowStockCount };
   const [moreOpen, setMoreOpen] = useState(false);
   const collapsed = useCollapsed();
   // Animate only when the user toggles — not when the saved preference is applied on page load.
@@ -119,11 +141,11 @@ export function AdminShell({ admin, alerts, children }: { admin: Admin; alerts: 
       <TopBar admin={admin} alerts={alerts} />
 
       {/* Tablet (md–lg): touch-friendly navigation rail, icon + label */}
-      <NavRail toFulfil={toFulfil} />
+      <NavRail counts={counts} />
 
       {/* Phone (< md): bottom tab bar + "More" sheet */}
-      <BottomNav toFulfil={toFulfil} moreOpen={moreOpen} onMore={() => setMoreOpen((o) => !o)} />
-      <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} />
+      <BottomNav counts={counts} moreOpen={moreOpen} onMore={() => setMoreOpen((o) => !o)} />
+      <MoreSheet counts={counts} open={moreOpen} onClose={() => setMoreOpen(false)} />
 
       {/* Desktop (lg+): full sidebar or collapsed icon rail */}
       <aside
@@ -167,13 +189,13 @@ export function AdminShell({ admin, alerts, children }: { admin: Admin; alerts: 
 
           <nav aria-label="Admin" className="flex-1 space-y-0.5 px-3 py-3">
             {NAV.map((item, i) => (
-              <NavLink key={item.href} {...item} index={i} collapsed={collapsed} badge={item.badgeKey ? toFulfil : 0} />
+              <NavLink key={item.href} {...item} index={i} collapsed={collapsed} badge={item.badgeKey ? counts[item.badgeKey] : 0} hint={item.badgeKey ? BADGE_HINT[item.badgeKey] : ""} />
             ))}
           </nav>
 
           <nav aria-label="Support" className="space-y-0.5 p-3">
             {FOOTER_NAV.map((item, i) => (
-              <NavLink key={item.href} {...item} index={NAV.length + i} collapsed={collapsed} badge={0} />
+              <NavLink key={item.href} {...item} index={NAV.length + i} collapsed={collapsed} badge={0} hint="" />
             ))}
           </nav>
         </div>
@@ -195,11 +217,14 @@ function Brand({ collapsed, animate }: { collapsed: boolean; animate: boolean })
       tabIndex={collapsed ? -1 : undefined}
       // Fades rather than unmounting; waits a beat on expand so it appears once there's room.
       // Only animate when the user toggles — not when the saved state is applied on load
-      className={`flex items-baseline gap-2 whitespace-nowrap ${animate ? "transition-opacity duration-150" : ""} ${
+      className={`flex items-center gap-2 whitespace-nowrap ${animate ? "transition-opacity duration-150" : ""} ${
         collapsed ? "lg:pointer-events-none lg:opacity-0" : "delay-100"
       }`}
     >
-      <span className="font-display text-xl tracking-tight">Kosha</span>
+      <span className="flex items-center gap-1.5">
+        <SilkMothMark className="size-6 shrink-0" />
+        <span className="font-display text-xl tracking-tight">Kosha</span>
+      </span>
       <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[0.65rem] font-medium uppercase tracking-wider text-neutral-500">
         Admin
       </span>
@@ -242,6 +267,7 @@ function NavLink({
   icon: Icon,
   exact,
   badge,
+  hint,
   collapsed,
   index,
 }: {
@@ -250,6 +276,7 @@ function NavLink({
   icon: React.ComponentType<{ className?: string }>;
   exact?: boolean;
   badge: number;
+  hint: string;
   collapsed: boolean;
   /** Position in the sidebar, used to stagger the slide-in */
   index: number;
@@ -260,7 +287,7 @@ function NavLink({
   return (
     <RailItem
       collapsed={collapsed}
-      label={badge > 0 ? `${label} · ${badge} to fulfil` : label}
+      label={badge > 0 ? `${label} · ${badge} ${hint}` : label}
       className="animate-sidebar-in"
       style={{ animationDelay: `${80 + index * 55}ms` }}
     >
@@ -320,18 +347,18 @@ function CountBadge({ count, className = "" }: { count: number; className?: stri
 
 // ─── Tablet: navigation rail ─────────────────────────────────────────────────
 
-function NavRail({ toFulfil }: { toFulfil: number }) {
+function NavRail({ counts }: { counts: Counts }) {
   const isActive = useIsActive();
 
-  const item = (n: (typeof NAV)[number] | (typeof FOOTER_NAV)[number], badge = 0) => {
-    const active = isActive(n.href, "exact" in n ? n.exact : false);
+  const item = (n: NavItem, badge = 0, hint = "") => {
+    const active = isActive(n.href, n.exact);
     const Icon = n.icon;
     return (
       <Link
         key={n.href}
         href={n.href}
         aria-current={active ? "page" : undefined}
-        aria-label={badge > 0 ? `${n.label}, ${badge} to fulfil` : undefined}
+        aria-label={badge > 0 ? `${n.label}, ${badge} ${hint}` : undefined}
         className="group flex flex-col items-center gap-1 py-1.5 text-[0.7rem] leading-tight"
       >
         <span
@@ -354,12 +381,12 @@ function NavRail({ toFulfil }: { toFulfil: number }) {
       <Link
         href="/admin"
         aria-label="Kosha admin home"
-        className="mx-auto mt-3 flex size-10 items-center justify-center rounded-xl bg-neutral-900 font-display text-lg text-white"
+        className="mx-auto mt-3 flex size-10 items-center justify-center rounded-xl bg-neutral-900 text-white"
       >
-        B
+        <SilkMothMark className="size-6" />
       </Link>
       <nav aria-label="Admin" className="mt-6 flex flex-1 flex-col gap-2 px-1">
-        {NAV.map((n) => item(n, "badgeKey" in n && n.badgeKey ? toFulfil : 0))}
+        {NAV.map((n) => (n.badgeKey ? item(n, counts[n.badgeKey], BADGE_HINT[n.badgeKey]) : item(n)))}
       </nav>
       <nav aria-label="Support" className="flex flex-col gap-2 px-1 pb-4">
         {FOOTER_NAV.map((n) => item(n))}
@@ -370,9 +397,11 @@ function NavRail({ toFulfil }: { toFulfil: number }) {
 
 // ─── Phone: bottom tab bar ───────────────────────────────────────────────────
 
-function BottomNav({ toFulfil, moreOpen, onMore }: { toFulfil: number; moreOpen: boolean; onMore: () => void }) {
+function BottomNav({ counts, moreOpen, onMore }: { counts: Counts; moreOpen: boolean; onMore: () => void }) {
   const isActive = useIsActive();
-  const moreActive = moreOpen || FOOTER_NAV.some((n) => isActive(n.href));
+  const inMore = [...NAV.filter((n) => n.phoneMore), ...FOOTER_NAV];
+  const moreActive = moreOpen || inMore.some((n) => isActive(n.href));
+  const moreBadge = NAV.filter((n) => n.phoneMore && n.badgeKey).reduce((sum, n) => sum + counts[n.badgeKey!], 0);
 
   const tab = (
     label: string,
@@ -403,15 +432,15 @@ function BottomNav({ toFulfil, moreOpen, onMore }: { toFulfil: number; moreOpen:
       className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur supports-[backdrop-filter]:bg-white/85 md:hidden"
     >
       <div className="flex h-16 items-stretch">
-        {NAV.map((n) => {
+        {NAV.filter((n) => !n.phoneMore).map((n) => {
           const active = !moreOpen && isActive(n.href, n.exact);
-          const badge = n.badgeKey ? toFulfil : 0;
+          const badge = n.badgeKey ? counts[n.badgeKey] : 0;
           return (
             <Link
               key={n.href}
               href={n.href}
               aria-current={active ? "page" : undefined}
-              aria-label={badge > 0 ? `${n.label}, ${badge} to fulfil` : undefined}
+              aria-label={badge > 0 && n.badgeKey ? `${n.label}, ${badge} ${BADGE_HINT[n.badgeKey]}` : undefined}
               className={cls}
             >
               {tab(n.label, n.icon, active, badge)}
@@ -419,7 +448,7 @@ function BottomNav({ toFulfil, moreOpen, onMore }: { toFulfil: number; moreOpen:
           );
         })}
         <button type="button" onClick={onMore} aria-expanded={moreOpen} aria-haspopup="dialog" className={cls}>
-          {tab("More", MoreHorizontal, moreActive)}
+          {tab("More", MoreHorizontal, moreActive, moreBadge)}
         </button>
       </div>
     </nav>
@@ -427,7 +456,7 @@ function BottomNav({ toFulfil, moreOpen, onMore }: { toFulfil: number; moreOpen:
 }
 
 /** Bottom sheet holding the less-used destinations on phones. */
-function MoreSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+function MoreSheet({ counts, open, onClose }: { counts: Counts; open: boolean; onClose: () => void }) {
   const isActive = useIsActive();
 
   useEffect(() => {
@@ -438,8 +467,9 @@ function MoreSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   }, [open, onClose]);
 
   const links = [
-    ...FOOTER_NAV.map((n) => ({ ...n, external: false })),
-    { href: "/", label: "View store", icon: ExternalLink, external: true },
+    ...NAV.filter((n) => n.phoneMore).map((n) => ({ ...n, external: false, badge: n.badgeKey ? counts[n.badgeKey] : 0 })),
+    ...FOOTER_NAV.map((n) => ({ ...n, external: false, badge: 0 })),
+    { href: "/", label: "View store", icon: ExternalLink, external: true, badge: 0 },
   ];
 
   return (
@@ -457,7 +487,8 @@ function MoreSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
       >
         <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-neutral-200" />
         <div className="flex items-center justify-between px-2 pb-2">
-          <span className="flex items-baseline gap-2">
+          <span className="flex items-center gap-2">
+            <SilkMothMark className="size-5" />
             <span className="font-display text-lg tracking-tight">Kosha</span>
             <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[0.6rem] font-medium uppercase tracking-wider text-neutral-500">
               Admin
@@ -485,7 +516,7 @@ function MoreSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
                   onClick={onClose}
                   tabIndex={open ? undefined : -1}
                   aria-current={active ? "page" : undefined}
-                  className={`flex flex-col items-center gap-2 rounded-xl border px-2 py-4 text-center text-xs transition-colors ${
+                  className={`relative flex flex-col items-center gap-2 rounded-xl border px-2 py-4 text-center text-xs transition-colors ${
                     active
                       ? "border-neutral-900 bg-neutral-900 text-white"
                       : "border-neutral-200 text-neutral-700 active:bg-neutral-50"
@@ -493,6 +524,7 @@ function MoreSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
                 >
                   <Icon className="size-5" />
                   {n.label}
+                  <CountBadge count={n.badge} className="right-2 top-2" />
                 </Link>
               </li>
             );
@@ -528,7 +560,10 @@ export function ShellSkeleton() {
       {/* Sidebar */}
       <div className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-neutral-200 bg-white lg:flex">
         <div className="flex h-14 items-center justify-between px-5">
-          <span className="font-display text-xl tracking-tight text-neutral-300">Kosha</span>
+          <span className="flex items-center gap-1.5 text-neutral-300">
+            <SilkMothMark className="size-6" />
+            <span className="font-display text-xl tracking-tight">Kosha</span>
+          </span>
           <span className={`${bar} size-4`} />
         </div>
         <div className="flex-1 space-y-1 px-3 py-3">

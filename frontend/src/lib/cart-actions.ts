@@ -3,7 +3,7 @@
 // Server Functions for the bag and checkout. The browser only ever talks to Next.js;
 // the cart id lives in an httpOnly cookie on the storefront domain and is forwarded to the API.
 import { cookies } from "next/headers";
-import type { ActionResult, Cart, PaymentMethod, RazorpayPayment } from "./types";
+import type { ActionResult, AppliedCoupon, Cart, PaymentMethod, RazorpayPayment } from "./types";
 
 const API_URL = process.env.API_URL ?? "http://localhost:4000";
 const CART_COOKIE = "bf_cart";
@@ -114,7 +114,22 @@ export type CheckoutForm = {
   state: string;
   pincode: string;
   paymentMethod: PaymentMethod;
+  couponCode?: string;
 };
+
+/** Checks a discount code against the visitor's bag. */
+export async function applyCoupon(code: string): Promise<ActionResult<{ coupon: AppliedCoupon }>> {
+  try {
+    const cartId = await readCartId();
+    if (!cartId) return { ok: false, error: "Your bag is empty." };
+    const coupon = await api<AppliedCoupon>("/api/checkout/coupon", { method: "POST", body: { cartId, code } });
+    return { ok: true, coupon };
+  } catch (e) {
+    const res = fail(e);
+    // Show the field message ("Enter a code") rather than a generic one
+    return res.fieldErrors?.code ? { ok: false, error: res.fieldErrors.code } : res;
+  }
+}
 
 export async function placeOrder(
   form: CheckoutForm,

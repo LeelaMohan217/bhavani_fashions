@@ -24,11 +24,14 @@ export function TableToolbar({
   searchPlaceholder,
   filters,
   exportPath,
+  children,
 }: {
   searchPlaceholder: string;
   filters: FilterGroup[];
-  /** Route handler that returns a CSV for the current params */
-  exportPath: string;
+  /** Route handler that returns a CSV for the current params; no Export button without it */
+  exportPath?: string;
+  /** Extra controls placed after the filter button */
+  children?: React.ReactNode;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -49,12 +52,15 @@ export function TableToolbar({
     <div className="flex flex-wrap items-center gap-2 border-b border-neutral-100 p-3">
       <SearchField placeholder={searchPlaceholder} pending={pending} onSearch={(v) => update((p) => (v ? p.set("search", v) : p.delete("search")))} initial={params.get("search") ?? ""} />
 
-      <FilterMenu filters={filters} params={params} activeCount={activeCount} update={update} />
+      {filters.length > 0 && <FilterMenu filters={filters} params={params} activeCount={activeCount} update={update} />}
+      {children}
 
-      <a href={exportHref} download className={`${toolBtn} ml-auto`}>
-        <Download className="size-3.5" />
-        Export
-      </a>
+      {exportPath && (
+        <a href={exportHref} download className={`${toolBtn} ml-auto`}>
+          <Download className="size-3.5" />
+          Export
+        </a>
+      )}
     </div>
   );
 }

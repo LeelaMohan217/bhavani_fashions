@@ -98,7 +98,10 @@ export async function listProducts(q: z.infer<typeof ProductListQuery>) {
   const where: Prisma.ProductWhereInput = {
     // Only one of live/hidden selected narrows the list; both (or neither) means everything
     ...(q.status.includes("active") !== q.status.includes("hidden") && { isActive: q.status.includes("active") }),
-    ...(q.category.length > 0 && { category: { slug: { in: q.category } } }),
+    // A category also includes the products in its subcategories
+    ...(q.category.length > 0 && {
+      category: { OR: [{ slug: { in: q.category } }, { parent: { slug: { in: q.category } } }] },
+    }),
     ...(q.search && {
       OR: [
         { name: { contains: q.search, mode: "insensitive" } },
@@ -203,6 +206,36 @@ export async function updateProduct(id: string, input: z.infer<typeof ProductInp
   });
 
   return getAdminProduct(id);
+}
+
+/** Variants at or below this many pieces count as low stock (same rule as the dashboard and bell) */
+export const LOW_STOCK = 3;
+
+export const LowStockQuery = z.object({ show: z.enum(["all", "sold-out", "low"]).default("all") });
+
+/** Admin → Low stock: every variant of a live product that's running out, lowest first */
+export async function listLowStock(q: z.infer<typeof LowStockQuery>) {
+  const live = { product: { isActive: true } };
+  const [items, soldOut, low] = await Promise.all([
+    prisma.productVariant.findMany({
+      where: {
+        ...live,
+        stock: q.show === "sold-out" ? 0 : q.show === "low" ? { gt: 0, lte: LOW_STOCK } : { lte: LOW_STOCK },
+      },
+      orderBy: [{ stock: "asc" }, { product: { name: "asc" } }, { sku: "asc" }],
+      select: {
+        id: true,
+        sku: true,
+        color: true,
+        size: true,
+        stock: true,
+        product: { select: { id: true, name: true, category: { select: { name: true } } } },
+      },
+    }),
+    prisma.productVariant.count({ where: { ...live, stock: 0 } }),
+    prisma.productVariant.count({ where: { ...live, stock: { gt: 0, lte: LOW_STOCK } } }),
+  ]);
+  return { threshold: LOW_STOCK, counts: { soldOut, low, total: soldOut + low }, items };
 }
 
 export async function setProductActive(id: string, isActive: boolean) {

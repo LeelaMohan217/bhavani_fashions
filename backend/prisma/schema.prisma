@@ -18,9 +18,17 @@ model Category {
   description String?
   imageUrl    String?
   sortOrder   Int       @default(0)
+  /// Hidden categories (and their products) don't appear in the store
+  isActive    Boolean   @default(true)
+  /// Set for subcategories (e.g. Silk sarees under Sarees); one level deep only
+  parentId    String?
+  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children    Category[] @relation("CategoryTree")
   products    Product[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  @@index([parentId, sortOrder])
 }
 
 model Product {
@@ -148,6 +156,12 @@ model Order {
   subtotal          Int
   shippingFee       Int
   codFee            Int
+  /// Coupon discount taken off the subtotal (0 when no coupon was used)
+  discount          Int           @default(0)
+  /// The coupon code as typed at checkout (kept even if the coupon is deleted later)
+  couponCode        String?
+  /// Set once the order counts towards the coupon's usage limit
+  couponCounted     Boolean       @default(false)
   total             Int
 
   razorpayOrderId   String?       @unique
@@ -199,6 +213,7 @@ model AdminUser {
   lastLoginAt  DateTime?
   sessions     AdminSession[]
   orderEvents  OrderEvent[]
+  activities   ActivityLog[]
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 }
@@ -260,6 +275,55 @@ model Banner {
 enum BannerTextSide {
   LEFT
   RIGHT
+}
+
+enum CouponType {
+  /// value is a percentage (1 to 90)
+  PERCENT
+  /// value is a fixed amount in paise
+  FLAT
+}
+
+/// A discount code shoppers type at checkout, e.g. FESTIVE10
+model Coupon {
+  id          String     @id @default(cuid())
+  /// Stored in capitals; matched without caring about case
+  code        String     @unique
+  /// Short note for the team, e.g. "Diwali Instagram post"
+  description String?
+  type        CouponType
+  value       Int
+  /// Smallest bag subtotal (paise) the code works on; 0 means any
+  minOrder    Int        @default(0)
+  /// Cap on a percentage discount, in paise; null means no cap
+  maxDiscount Int?
+  startsAt    DateTime?
+  endsAt      DateTime?
+  /// Total times the code can be used across all shoppers; null means unlimited
+  usageLimit  Int?
+  usedCount   Int        @default(0)
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+/// Who changed what in the admin panel
+model ActivityLog {
+  id        String     @id @default(cuid())
+  adminId   String?
+  admin     AdminUser? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  /// Kept so the entry still reads right after the admin is removed
+  adminName String
+  /// Area of the panel: product, category, banner, order, coupon, offer, account, profile
+  area      String
+  /// One readable line, e.g. "Hid product Vana Handloom Cotton Saree"
+  summary   String
+  /// Admin page the entry points at, when it still exists
+  href      String?
+  createdAt DateTime   @default(now())
+
+  @@index([createdAt])
+  @@index([area, createdAt])
 }
 
 /// A store-wide percentage-off promotion (e.g. Black Friday). Applied to every live product's

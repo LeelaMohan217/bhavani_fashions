@@ -50,7 +50,10 @@ async function Product({ params }: Pick<PageProps<"/products/[slug]">, "params">
           <p>{product.description}</p>
           <h3 className="mt-6 font-medium text-ink">Details</h3>
           <ul className="mt-3 list-disc space-y-1.5 pl-5 marker:text-stone">
-            <li>Category: {product.category.name}</li>
+            <li>
+              Category: {product.category.parent ? `${product.category.parent.name} › ` : ""}
+              {product.category.name}
+            </li>
             {product.fabric && <li>Fabric: {product.fabric}</li>}
             {product.occasion && <li>Occasion: {product.occasion}</li>}
             {colours.length > 0 && <li>Colours: {colours.join(", ")}</li>}
@@ -96,7 +99,23 @@ async function Product({ params }: Pick<PageProps<"/products/[slug]">, "params">
                 <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-2 text-xs text-stone">
                   <Link href="/" className="shrink-0 hover:text-ink">Home</Link>
                   <ChevronRight className="size-3 shrink-0" strokeWidth={1.5} aria-hidden />
-                  <Link href={`/shop/${product.category.slug}`} className="shrink-0 hover:text-ink">
+                  {/* Subcategory pieces: Sarees › Silk sarees (the second opens Sarees filtered to that type) */}
+                  {product.category.parent && (
+                    <>
+                      <Link href={`/shop/${product.category.parent.slug}`} className="shrink-0 hover:text-ink">
+                        {product.category.parent.name}
+                      </Link>
+                      <ChevronRight className="size-3 shrink-0" strokeWidth={1.5} aria-hidden />
+                    </>
+                  )}
+                  <Link
+                    href={
+                      product.category.parent
+                        ? `/shop/${product.category.parent.slug}?type=${product.category.slug}`
+                        : `/shop/${product.category.slug}`
+                    }
+                    className="shrink-0 hover:text-ink"
+                  >
                     {product.category.name}
                   </Link>
                   <ChevronRight className="size-3 shrink-0" strokeWidth={1.5} aria-hidden />

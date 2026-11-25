@@ -3,6 +3,7 @@ import type { OrderStatus, Prisma } from "../../generated/prisma/client.js";
 import { prisma } from "../lib/prisma.js";
 import { HttpError, notFound } from "../lib/http-error.js";
 import { formatOrderNumber } from "../config/store.js";
+import { releaseCouponUse } from "./coupons.js";
 
 /** Comma-separated multi-select param, e.g. "SHIPPED,DELIVERED" → ["SHIPPED", "DELIVERED"] */
 const csvOf = <T extends string>(values: readonly [T, ...T[]]) =>
@@ -150,6 +151,11 @@ export async function updateOrderStatus(id: string, input: z.infer<typeof Status
       } else {
         message = "Cancelled";
       }
+      // The order no longer counts towards its coupon's usage limit
+      if (order.couponCode && order.couponCounted) {
+        await releaseCouponUse(tx, order.couponCode);
+        data.couponCounted = false;
+      }
       if (order.paymentStatus === "PAID") {
         data.paymentStatus = "REFUND_DUE";
         message += " · refund due";
@@ -233,7 +239,7 @@ export async function dashboard() {
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const live: Prisma.OrderWhereInput = { status: { notIn: ["PENDING_PAYMENT", "CANCELLED"] } };
 
-  const [today, month, toFulfil, byMethod, lowStockCount, lowStock, recent, lastWeek, year] = await Promise.all([
+  const [today, month, toFulfil, byMethod, lowStockCount, lowStock, recent, lastWeek, year, soldOutCount] = await Promise.all([
     prisma.order.aggregate({ where: { ...live, createdAt: { gte: startOfToday } }, _count: true, _sum: { total: true } }),
     prisma.order.aggregate({ where: { ...live, createdAt: { gte: thirtyDaysAgo } }, _count: true, _sum: { total: true } }),
     prisma.order.count({ where: { status: { in: ["CONFIRMED", "PACKED"] } } }),
@@ -253,7 +259,7 @@ export async function dashboard() {
     prisma.order.findMany({
       where: { status: { not: "PENDING_PAYMENT" } },
       orderBy: { createdAt: "desc" },
-      take: 6,
+      take: 5,
       select: { id: true, number: true, fullName: true, total: true, status: true, paymentMethod: true, createdAt: true },
     }),
     prisma.order.aggregate({
@@ -262,6 +268,8 @@ export async function dashboard() {
       _sum: { total: true },
     }),
     prisma.order.findMany({ where: { ...live, createdAt: { gte: monthsStart } }, select: { createdAt: true, total: true } }),
+    // Of the low-stock variants, how many are already sold out (for the dashboard warning)
+    prisma.productVariant.count({ where: { stock: 0, product: { isActive: true } } }),
   ]);
 
   // Last 12 IST months, oldest first, including months with no sales
@@ -288,6 +296,7 @@ export async function dashboard() {
     toFulfil,
     paymentSplit: { cod: method("COD"), prepaid: method("RAZORPAY") },
     lowStockCount,
+    soldOutCount,
     lowStock,
     recentOrders: recent.map((o) => ({ ...o, number: formatOrderNumber(o.number) })),
     sameDayLastWeek: { orders: lastWeek._count, revenue: lastWeek._sum.total ?? 0 },

@@ -2,7 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, ExternalLink, LogOut, PackageCheck, Receipt, RotateCcw, TriangleAlert } from "lucide-react";
+import {
+  Bell,
+  ExternalLink,
+  LayoutDashboard,
+  LogOut,
+  PackageCheck,
+  Receipt,
+  RotateCcw,
+  ShieldCheck,
+  TriangleAlert,
+  UserRound,
+} from "lucide-react";
 import { logout } from "@/lib/admin/actions";
 import type { Admin, AdminAlerts } from "@/lib/admin/types";
 import { formatPrice } from "@/lib/format";
@@ -159,7 +170,7 @@ function Notifications({ alerts }: { alerts: AdminAlerts }) {
                 <Group
                   title="Low stock"
                   tone="neutral"
-                  more={alerts.lowStockCount > alerts.lowStock.length ? { href: "/admin#low-stock", label: `View all ${alerts.lowStockCount}` } : undefined}
+                  more={alerts.lowStockCount > alerts.lowStock.length ? { href: "/admin/low-stock", label: `View all ${alerts.lowStockCount}` } : undefined}
                   onNavigate={close}
                 >
                   {alerts.lowStock.map((v) => (
@@ -262,28 +273,62 @@ function ProfileMenu({ admin }: { admin: Admin }) {
       </button>
 
       {open && (
-        <div role="menu" className="absolute right-0 top-full z-40 mt-1.5 w-60 rounded-lg border border-neutral-200 bg-white p-1 shadow-lg">
-          <div className="border-b border-neutral-100 px-3 py-2.5">
-            <p className="truncate text-sm font-medium">{admin.name}</p>
-            <p className="truncate text-xs text-neutral-500">{admin.email}</p>
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-40 mt-1.5 w-64 animate-palette-in overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-lg"
+        >
+          {/* Who's signed in */}
+          <div className="flex items-center gap-3 bg-neutral-900 px-3.5 py-3">
+            <span className="relative shrink-0">
+              <span className="flex size-10 items-center justify-center rounded-full bg-white/10 text-xs font-semibold text-white ring-1 ring-white/15">
+                {initials(admin.name)}
+              </span>
+              <span aria-hidden className="absolute bottom-0 right-0 size-2.5 rounded-full bg-emerald-400 ring-2 ring-neutral-900" title="Signed in" />
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-semibold text-white">{admin.name}</span>
+              <span className="block truncate text-xs text-white/60">{admin.email}</span>
+              <span className="mt-1 inline-block rounded-full bg-violet-500/25 px-1.5 py-px text-[0.65rem] font-medium text-violet-200">
+                Admin
+              </span>
+            </span>
           </div>
-          <div className="py-1">
+
+          <div className="p-1">
+            {[
+              { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+              { href: "/admin/profile", label: "Profile", icon: UserRound },
+              { href: "/admin/accounts", label: "Admin Accounts", icon: ShieldCheck },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                role="menuitem"
+                href={item.href}
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
+              >
+                <item.icon className="size-4 text-neutral-400" strokeWidth={1.75} /> {item.label}
+              </Link>
+            ))}
             <Link
               role="menuitem"
               href="/"
               target="_blank"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-100"
+              className="flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
             >
-              <ExternalLink className="size-4 text-neutral-500" /> View store
+              <ExternalLink className="size-4 text-neutral-400" strokeWidth={1.75} /> View store
             </Link>
+          </div>
+
+          <div className="border-t border-neutral-100 p-1">
             <form action={logout}>
               <button
                 role="menuitem"
                 type="submit"
-                className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-100"
+                className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
               >
-                <LogOut className="size-4 text-neutral-500" /> Sign out
+                <LogOut className="size-4" strokeWidth={1.75} /> Logout
               </button>
             </form>
           </div>

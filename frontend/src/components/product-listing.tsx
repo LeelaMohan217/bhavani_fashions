@@ -42,6 +42,7 @@ export async function ProductListing({
       category: categorySlug,
       isNew: onlyNew || undefined,
       sale: onlySale || undefined,
+      type: selection.type,
       occasion: selection.occasion,
       color: selection.color,
       fabric: selection.fabric,

@@ -7,6 +7,7 @@ import { env } from "../config/env.js";
 import { STORE, formatOrderNumber } from "../config/store.js";
 import { INDIAN_STATES } from "../config/india.js";
 import { getCart } from "./cart.js";
+import { countCouponUse, evaluateCoupon } from "./coupons.js";
 
 // ─── Validation ──────────────────────────────────────────────────────────────
 
@@ -31,6 +32,12 @@ export const PlaceOrderSchema = z.object({
   state: z.enum(INDIAN_STATES, { error: "Choose your state" }),
   pincode: z.string().trim().regex(/^[1-9]\d{5}$/, "Enter a valid 6-digit PIN code"),
   paymentMethod: z.enum(["RAZORPAY", "COD"]),
+  couponCode: z
+    .string()
+    .trim()
+    .max(30)
+    .optional()
+    .transform((v) => v || undefined),
 });
 
 export const VerifyPaymentSchema = z.object({
@@ -90,15 +97,20 @@ export async function placeOrder(input: z.infer<typeof PlaceOrderSchema>) {
     throw new HttpError(503, "Online payment is unavailable right now. Please choose cash on delivery.");
   }
 
+  // Re-checked here: the code may have expired or run out since the shopper applied it
+  const coupon = input.couponCode ? await evaluateCoupon(input.couponCode, cart.subtotal) : null;
+  const discount = coupon?.discount ?? 0;
   const codFee = input.paymentMethod === "COD" ? STORE.codFee : 0;
-  const total = cart.subtotal + STORE.shippingFee + codFee;
-  const { cartId, ...customer } = input;
+  const total = cart.subtotal - discount + STORE.shippingFee + codFee;
+  const { cartId, couponCode: _typedCode, ...customer } = input; // the saved code is the normalised one
 
   const orderData = {
     ...customer,
     subtotal: cart.subtotal,
     shippingFee: STORE.shippingFee,
     codFee,
+    discount,
+    couponCode: coupon?.coupon.code ?? null,
     total,
     cartId,
     items: {
@@ -120,9 +132,13 @@ export async function placeOrder(input: z.infer<typeof PlaceOrderSchema>) {
   if (input.paymentMethod === "COD") {
     const order = await prisma.$transaction(async (tx) => {
       await reserveStock(tx, cart.items);
+      if (coupon && !(await countCouponUse(tx, coupon.coupon.code, true))) {
+        throw new HttpError(409, "That code has just been fully used. Remove it to place your order.");
+      }
       const created = await tx.order.create({
         data: {
           ...orderData,
+          couponCounted: Boolean(coupon),
           paymentMethod: "COD",
           status: "CONFIRMED",
           paymentStatus: "COD_DUE",
@@ -212,6 +228,11 @@ export async function confirmPaidOrder(orderId: string, paymentId: string, via: 
       const order = await tx.order.findUniqueOrThrow({ where: { id: orderId }, include: { items: true } });
       await reserveStock(tx, order.items);
       await clearPurchased(tx, order.cartId, order.items.map((i) => i.variantId));
+      // Already paid, so the use is counted even if the code ran out in the meantime
+      if (order.couponCode) {
+        await countCouponUse(tx, order.couponCode, false);
+        await tx.order.update({ where: { id: orderId }, data: { couponCounted: true } });
+      }
       await tx.orderEvent.create({
         data: {
           orderId,
@@ -283,6 +304,8 @@ export async function getOrder(orderId: string) {
     subtotal: order.subtotal,
     shippingFee: order.shippingFee,
     codFee: order.codFee,
+    discount: order.discount,
+    couponCode: order.couponCode,
     total: order.total,
     createdAt: order.createdAt,
     courierName: order.courierName,
@@ -301,4 +324,12 @@ export async function getOrder(orderId: string) {
       lineTotal: i.lineTotal,
     })),
   };
+}
+
+/** Checks a code against the shopper's bag, for the "Apply" button at checkout. */
+export async function applyCoupon(cartId: string, code: string) {
+  const cart = await getCart(cartId);
+  if (cart.items.length === 0) throw new HttpError(400, "Your bag is empty.");
+  const { coupon, discount, label } = await evaluateCoupon(code, cart.subtotal);
+  return { code: coupon.code, discount, label };
 }

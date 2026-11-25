@@ -4,6 +4,7 @@ import type { Prisma } from "../../generated/prisma/client.js";
 import { prisma } from "../lib/prisma.js";
 import { notFound } from "../lib/http-error.js";
 import { getActivePromotion, withPromotion, type ActivePromotion } from "../services/promotions.js";
+import { inCategory, visibleProduct } from "../lib/catalogue.js";
 
 export const productsRouter = Router();
 
@@ -43,6 +44,8 @@ const ListQuery = z.object({
   color: csv,
   fabric: csv,
   occasion: csv,
+  /** Subcategory slugs, e.g. "silk-sarees,cotton-sarees" */
+  type: csv,
   price: priceBands,
   // Single price range (older links); combined with `price` bands if both are given
   minPrice: z.coerce.number().int().nonnegative().optional(),
@@ -110,15 +113,18 @@ const orderByFor: Record<z.infer<typeof ListQuery>["sort"], Prisma.ProductOrderB
   featured: [{ isFeatured: "desc" }, { createdAt: "desc" }],
 };
 
-/** The products a listing starts from (category, new, sale), before the sidebar filters */
-function scopeWhere(q: { category?: string; new?: boolean; sale?: boolean }, promo: ActivePromotion | null): Prisma.ProductWhereInput {
-  return {
-    isActive: true,
-    ...(q.category && { category: { slug: q.category } }),
-    ...(q.new !== undefined && { isNewArrival: q.new }),
+/**
+ * The products a listing starts from (visible ones, in a category and its subcategories, new,
+ * sale), before the sidebar filters. Returned as AND parts so callers can add their own.
+ */
+function scopeWhere(q: { category?: string; new?: boolean; sale?: boolean }, promo: ActivePromotion | null): Prisma.ProductWhereInput[] {
+  return [
+    visibleProduct,
+    ...(q.category ? [inCategory(q.category)] : []),
+    ...(q.new !== undefined ? [{ isNewArrival: q.new }] : []),
     // During a store-wide promotion every piece is on sale
-    ...(q.sale && !promo && { compareAtPrice: { gt: prisma.product.fields.price } }),
-  };
+    ...(q.sale && !promo ? [{ compareAtPrice: { gt: prisma.product.fields.price } }] : []),
+  ];
 }
 
 /** Price bounds are what shoppers see, so during a promotion they're converted back to list prices */
@@ -158,12 +164,16 @@ productsRouter.get("/", async (req, res) => {
   }
 
   const where: Prisma.ProductWhereInput = {
-    ...scopeWhere(q, promo),
+    AND: [
+      ...scopeWhere(q, promo),
+      ...and,
+      // Subcategories ("Type" in the shop sidebar), by slug
+      ...(q.type.length > 0 ? [{ category: { slug: { in: q.type } } }] : []),
+    ],
     ...(q.featured !== undefined && { isFeatured: q.featured }),
     ...(q.fabric.length > 0 && { fabric: { in: q.fabric, mode: "insensitive" } }),
     ...(q.occasion.length > 0 && { occasion: { in: q.occasion, mode: "insensitive" } }),
     ...(q.color.length > 0 && { variants: { some: { color: { in: q.color, mode: "insensitive" } } } }),
-    ...(and.length > 0 && { AND: and }),
   };
 
   const [total, rows] = await prisma.$transaction([
@@ -194,10 +204,20 @@ const FiltersQuery = z.object({ category: z.string().optional(), new: boolParam,
 productsRouter.get("/filters", async (req, res) => {
   const q = FiltersQuery.parse(req.query);
   const promo = await getActivePromotion();
-  const rows = await prisma.product.findMany({
-    where: scopeWhere(q, promo),
-    select: { fabric: true, occasion: true, variants: { select: { color: true, colorHex: true } } },
-  });
+  const [rows, subcategories] = await Promise.all([
+    prisma.product.findMany({
+      where: { AND: scopeWhere(q, promo) },
+      select: { categoryId: true, fabric: true, occasion: true, variants: { select: { color: true, colorHex: true } } },
+    }),
+    // "Type": the visible subcategories of this category, in the admin's order
+    q.category
+      ? prisma.category.findMany({
+          where: { parent: { slug: q.category }, isActive: true },
+          orderBy: { sortOrder: "asc" },
+          select: { id: true, name: true, slug: true },
+        })
+      : Promise.resolve([]),
+  ]);
 
   // Group case-insensitively, keep the first spelling seen, count products (not variants)
   const tally = <T extends { name: string }>(map: Map<string, T & { count: number }>, item: T) => {
@@ -224,7 +244,13 @@ productsRouter.get("/filters", async (req, res) => {
   }
 
   const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name);
+  const perCategory = new Map<string, number>();
+  for (const p of rows) perCategory.set(p.categoryId, (perCategory.get(p.categoryId) ?? 0) + 1);
   res.json({
+    // Only subcategories that have something to show
+    types: subcategories
+      .map((s) => ({ slug: s.slug, name: s.name, count: perCategory.get(s.id) ?? 0 }))
+      .filter((s) => s.count > 0),
     colors: [...colors.values()].sort(byName),
     fabrics: [...fabrics.values()].sort(byName),
     occasions: [...occasions.values()].sort(byName),
@@ -234,9 +260,10 @@ productsRouter.get("/filters", async (req, res) => {
 // GET /api/products/:slug — full product detail plus related products
 productsRouter.get("/:slug", async (req, res) => {
   const product = await prisma.product.findFirst({
-    where: { slug: req.params.slug, isActive: true },
+    where: { slug: req.params.slug, ...visibleProduct },
     include: {
-      category: { select: { name: true, slug: true } },
+      // Parent too, for the breadcrumb of pieces in a subcategory (Sarees › Silk sarees)
+      category: { select: { name: true, slug: true, parent: { select: { name: true, slug: true } } } },
       images: { orderBy: { position: "asc" }, select: { url: true, alt: true } },
       variants: {
         orderBy: { sku: "asc" },
@@ -248,7 +275,7 @@ productsRouter.get("/:slug", async (req, res) => {
   if (!product) throw notFound("Product");
 
   const related = await prisma.product.findMany({
-    where: { isActive: true, categoryId: product.categoryId, id: { not: product.id } },
+    where: { ...visibleProduct, categoryId: product.categoryId, id: { not: product.id } },
     orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
     take: 4,
     select: cardSelect,

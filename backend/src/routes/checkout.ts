@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   PlaceOrderSchema,
+  applyCoupon,
   TrackOrderSchema,
   VerifyPaymentSchema,
   trackOrder,
@@ -9,6 +10,7 @@ import {
   placeOrder,
   verifyPayment,
 } from "../services/checkout.js";
+import { ApplyCouponSchema } from "../services/coupons.js";
 
 export const checkoutRouter = Router();
 export const ordersRouter = Router();
@@ -22,6 +24,12 @@ checkoutRouter.get("/config", (_req, res) => {
 checkoutRouter.post("/", async (req, res) => {
   const input = PlaceOrderSchema.parse(req.body);
   res.status(201).json(await placeOrder(input));
+});
+
+// POST /api/checkout/coupon — check a discount code against the bag
+checkoutRouter.post("/coupon", async (req, res) => {
+  const { cartId, code } = ApplyCouponSchema.parse(req.body);
+  res.json(await applyCoupon(cartId, code));
 });
 
 // POST /api/checkout/verify — confirm a Razorpay payment using its signature

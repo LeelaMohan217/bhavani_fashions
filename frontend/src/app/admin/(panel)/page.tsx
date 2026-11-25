@@ -3,12 +3,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertTriangle, ArrowRight, ChevronRight, ExternalLink, IndianRupee, PackageCheck, Plus, Receipt, Shirt, ShoppingBag } from "lucide-react";
 import { Delta, RevenueGrowth } from "@/components/admin/revenue-growth";
-import { getDashboard, getMe } from "@/lib/admin/api";
+import { getBestSellers, getDashboard, getMe } from "@/lib/admin/api";
+import { BestSellersCard } from "@/components/admin/best-sellers-card";
 import { Greeting } from "@/components/admin/greeting";
 import { CountUp } from "@/components/admin/count-up";
 import { SyncButton } from "@/components/admin/sync-button";
 import { formatPrice } from "@/lib/format";
-import { Card, EmptyState, OrderStatusBadge, PAYMENT_METHOD, TableSkeleton, formatDateTime } from "@/components/admin/ui";
+import { Avatar, Card, EmptyState, OrderStatusBadge, PAYMENT_METHOD, TableSkeleton, formatDateTime } from "@/components/admin/ui";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -31,7 +32,12 @@ async function AdminGreeting() {
 }
 
 async function DashboardContent() {
-  const d = await getDashboard();
+  const [d, thisMonth, lastMonth, allTime] = await Promise.all([
+    getDashboard(),
+    getBestSellers({ period: "this-month", limit: 3 }),
+    getBestSellers({ period: "last-month", limit: 3 }),
+    getBestSellers({ period: "all", limit: 3 }),
+  ]);
   const lw = d.sameDayLastWeek;
   const vsLastWeek = (cur: number, prev?: number) => (prev ? Math.round(((cur - prev) / prev) * 100) : null);
 
@@ -41,7 +47,7 @@ async function DashboardContent() {
         <Stat icon={ShoppingBag} tint="sky" label="Orders today" value={d.today.orders} delta={vsLastWeek(d.today.orders, lw?.orders)} />
         <Stat icon={IndianRupee} tint="emerald" label="Revenue today" value={d.today.revenue} format="inr" delta={vsLastWeek(d.today.revenue, lw?.revenue)} />
         <Stat icon={PackageCheck} tint="amber" label="Waiting to ship" value={d.toFulfil} href="/admin/orders?status=to-fulfil" />
-        <Stat icon={AlertTriangle} tint="red" label="Low-stock variants" value={d.lowStockCount} href="#low-stock" />
+        <Stat icon={AlertTriangle} tint="red" label="Low-stock variants" value={d.lowStockCount} href="/admin/low-stock" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -49,51 +55,13 @@ async function DashboardContent() {
         <QuickActions toFulfil={d.toFulfil} />
       </div>
 
-      <div id="low-stock" className="scroll-mt-20">
-        <Card
-          title={d.lowStockCount > d.lowStock.length ? `Low stock · lowest ${d.lowStock.length} of ${d.lowStockCount}` : "Low stock"}
-          bodyClassName=""
-        >
-          {d.lowStock.length === 0 ? (
-            <EmptyState icon={PackageCheck} title="Stock looks healthy" description="Variants with 3 or fewer pieces left will show up here." />
-          ) : (
-            <div className="relative overflow-x-auto overflow-y-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-neutral-100 text-left text-xs text-neutral-500">
-                    <th className="px-5 py-2.5 font-medium">Product</th>
-                    <th className="px-5 py-2.5 font-medium">Variant</th>
-                    <th className="px-5 py-2.5 font-medium">SKU</th>
-                    <th className="px-5 py-2.5 text-right font-medium">In stock</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-neutral-100">
-                  {d.lowStock.map((v) => (
-                    <tr key={v.id} className="hover:bg-neutral-50">
-                      <td className="px-5 py-3">
-                        <Link href={`/admin/products/${v.product.id}`} className="font-medium hover:underline">
-                          {v.product.name}
-                        </Link>
-                      </td>
-                      <td className="px-5 py-3 text-neutral-600">
-                        {v.color}
-                        {v.size && ` · ${v.size}`}
-                      </td>
-                      <td className="px-5 py-3 tabular-nums text-xs text-neutral-500">{v.sku}</td>
-                      <td className="px-5 py-3 text-right">
-                        <span className={`font-semibold tabular-nums ${v.stock === 0 ? "text-red-600" : "text-amber-700"}`}>
-                          {v.stock === 0 ? "Sold out" : v.stock}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </Card>
+      {/* Best sellers beside the stock warning; both stretch to the same height */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <BestSellersCard data={{ "this-month": thisMonth, "last-month": lastMonth, all: allTime }} />
+        {d.lowStockCount > 0 && <LowStockWarning count={d.lowStockCount} soldOut={d.soldOutCount ?? 0} />}
       </div>
 
+      {/* Recent orders last */}
       <Card
         title="Recent orders"
         className="min-w-0"
@@ -109,23 +77,22 @@ async function DashboardContent() {
         ) : (
           // Rows rise in one after another (admin motion styles); new orders animate in after a sync.
           <ul className="divide-y divide-neutral-100 overflow-hidden">
-            {d.recentOrders.map((o) => (
+            {d.recentOrders.slice(0, 5).map((o) => (
               <li key={o.id}>
-                <Link href={`/admin/orders/${o.id}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-neutral-50">
+                <Link href={`/admin/orders/${o.id}`} className="group flex items-center gap-3 px-5 py-2.5 hover:bg-neutral-50">
+                  <Avatar name={o.fullName} size="sm" />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">
-                      {o.number} <span className="font-normal text-neutral-500">· {o.fullName}</span>
-                    </p>
-                    <p className="mt-0.5 truncate text-xs text-neutral-500">
-                      {formatDateTime(o.createdAt)}
-                      <span className="hidden sm:inline"> · {PAYMENT_METHOD[o.paymentMethod]}</span>
+                    <p className="truncate text-sm font-medium text-neutral-900">{o.fullName}</p>
+                    <p className="truncate text-xs text-neutral-500">
+                      <span className="tabular-nums">{o.number}</span> · {formatDateTime(o.createdAt)}
                     </p>
                   </div>
-                  {/* Phone: amount over status. Wider: status then amount, in a row */}
-                  <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row-reverse sm:items-center sm:gap-4">
-                    <span className="text-sm font-medium tabular-nums sm:w-24 sm:text-right">{formatPrice(o.total)}</span>
+                  <span className="hidden w-32 shrink-0 text-xs text-neutral-500 md:block">{PAYMENT_METHOD[o.paymentMethod]}</span>
+                  <span className="hidden w-24 shrink-0 sm:block">
                     <OrderStatusBadge status={o.status} />
-                  </div>
+                  </span>
+                  <span className="w-20 shrink-0 text-right text-sm font-semibold tabular-nums">{formatPrice(o.total)}</span>
+                  <ChevronRight className="size-4 shrink-0 text-neutral-300 transition-colors group-hover:text-neutral-500" />
                 </Link>
               </li>
             ))}
@@ -133,6 +100,47 @@ async function DashboardContent() {
         )}
       </Card>
     </div>
+  );
+}
+
+/** Stock warning card: counts only (the full list lives on the Low stock page). Stretches to match Best sellers. */
+function LowStockWarning({ count, soldOut }: { count: number; soldOut: number }) {
+  const low = count - soldOut;
+  const tiles = [
+    { label: "Sold out", value: soldOut, href: "/admin/low-stock?show=sold-out", tone: "text-red-600" },
+    { label: "3 or fewer left", value: low, href: "/admin/low-stock?show=low", tone: "text-amber-700" },
+  ];
+  return (
+    <Card
+      title="Running low"
+      className="flex min-w-0 flex-col"
+      bodyClassName="flex flex-1 flex-col gap-3 p-5"
+      action={
+        <Link href="/admin/low-stock" className="inline-flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-900">
+          View list <ArrowRight className="size-3.5" />
+        </Link>
+      }
+    >
+      <p className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        <AlertTriangle className="size-4 shrink-0 text-amber-600" />
+        <span>
+          <span className="font-medium tabular-nums">{count}</span> variant{count === 1 ? "" : "s"} need restocking
+        </span>
+      </p>
+      <div className="grid flex-1 grid-cols-2 gap-3">
+        {tiles.map((t) => (
+          <Link
+            key={t.label}
+            href={t.href}
+            className="flex flex-col justify-center rounded-md border border-neutral-200 px-4 py-3 transition-colors hover:border-neutral-300 hover:bg-neutral-50"
+          >
+            <span className={`text-2xl font-semibold tabular-nums ${t.tone}`}>{t.value}</span>
+            <span className="text-xs text-neutral-500">{t.label}</span>
+          </Link>
+        ))}
+      </div>
+      <p className="text-xs text-neutral-500">Restock these from the product page before they go out of stock.</p>
+    </Card>
   );
 }
 
@@ -287,10 +295,13 @@ function DashboardSkeleton() {
         </Card>
       </div>
 
-      {/* Low stock */}
-      <Card title="Low stock" bodyClassName="">
-        <TableSkeleton rows={4} />
-      </Card>
+      {/* Best sellers beside the stock warning */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card title="Best sellers" bodyClassName="">
+          <TableSkeleton rows={4} />
+        </Card>
+        <Bar className="h-full min-h-40 w-full rounded-lg" />
+      </div>
 
       {/* Recent orders */}
       <Card title="Recent orders" bodyClassName="" action={<Bar className="h-4 w-14" />}>

@@ -8,6 +8,7 @@ import {
   ArrowUp,
   CornerDownLeft,
   ExternalLink,
+  FolderTree,
   GalleryHorizontalEnd,
   History,
   LifeBuoy,
@@ -18,6 +19,7 @@ import {
   Search,
   Settings,
   Shirt,
+  TrendingUp,
 } from "lucide-react";
 
 // ─── Recent searches (per browser) ───────────────────────────────────────────
@@ -221,6 +223,9 @@ function Palette({ toFulfil, onClose }: { toFulfil: number; onClose: () => void 
     const pages: Item[] = [
       { id: "p-orders", icon: Receipt, title: "Orders", subtitle: "All orders and their status", keywords: "orders sales customers", run: () => go("/admin/orders") },
       { id: "p-products", icon: Shirt, title: "Products", subtitle: "Catalogue, prices and stock", keywords: "products catalogue sarees lehengas stock inventory", run: () => go("/admin/products") },
+      { id: "p-low-stock", icon: PackageCheck, title: "Low stock", subtitle: "Sold-out and nearly gone variants", keywords: "low stock inventory sold out restock running out variants", run: () => go("/admin/low-stock") },
+      { id: "p-insights", icon: TrendingUp, title: "Best sellers", subtitle: "Top products this month, last month and all time", keywords: "best sellers top selling products insights report analytics sales popular", run: () => go("/admin/insights") },
+      { id: "p-categories", icon: FolderTree, title: "Categories", subtitle: "Categories and subcategories", keywords: "categories subcategories sarees lehengas kurta sets groups types collections", run: () => go("/admin/categories") },
       { id: "p-banners", icon: GalleryHorizontalEnd, title: "Banners & offers", subtitle: "Home-page banners and store-wide sales", keywords: "banners home page offers slideshow hero promotions black friday sale discount", run: () => go("/admin/banners") },
       { id: "p-settings", icon: Settings, title: "Settings", subtitle: "Payments, shipping and your account", keywords: "settings payments razorpay shipping account cod", run: () => go("/admin/settings") },
       { id: "p-help", icon: LifeBuoy, title: "Help & Support", subtitle: "Guides and keyboard shortcuts", keywords: "help support guides shortcuts faq", run: () => go("/admin/help") },

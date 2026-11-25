@@ -3,11 +3,11 @@
 import { PRICE_RANGES } from "./content";
 import type { SortOption } from "./types";
 
-export type FilterKey = "price" | "occasion" | "color" | "fabric";
+export type FilterKey = "type" | "price" | "occasion" | "color" | "fabric";
 export type Selection = Record<FilterKey, string[]>;
 
-export const FILTER_KEYS: FilterKey[] = ["price", "occasion", "color", "fabric"];
-export const EMPTY_SELECTION: Selection = { price: [], occasion: [], color: [], fabric: [] };
+export const FILTER_KEYS: FilterKey[] = ["type", "price", "occasion", "color", "fabric"];
+export const EMPTY_SELECTION: Selection = { type: [], price: [], occasion: [], color: [], fabric: [] };
 
 type Params = Record<string, string | string[] | undefined> | URLSearchParams;
 
@@ -30,6 +30,8 @@ export function parseSelection(sp: Params): Selection {
     if (legacy && !price.includes(legacy.key)) price.push(legacy.key);
   }
   return {
+    // Subcategory slugs, e.g. ?type=silk-sarees,cotton-sarees
+    type: list(read(sp, "type")),
     price,
     occasion: list(read(sp, "occasion")),
     color: list(read(sp, "color")),

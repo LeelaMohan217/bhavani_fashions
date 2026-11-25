@@ -56,7 +56,8 @@ export type ProductDetail = {
   price: number;
   compareAtPrice: number | null;
   isNewArrival: boolean;
-  category: { name: string; slug: string };
+  /** `parent` is set when the product sits in a subcategory (e.g. Sarees › Silk sarees) */
+  category: { name: string; slug: string; parent?: { name: string; slug: string } | null };
   images: ProductImage[];
   variants: ProductVariant[];
   related: ProductCard[];
@@ -93,6 +94,8 @@ export type Banner = {
 
 /** Filter choices on offer in a listing, with how many products each finds */
 export type ProductFilters = {
+  /** Subcategories of the listing's category that have products */
+  types: { slug: string; name: string; count: number }[];
   colors: { name: string; hex: string; count: number }[];
   fabrics: { name: string; count: number }[];
   occasions: { name: string; count: number }[];
@@ -129,6 +132,9 @@ export type Cart = {
   codFee: number;
 };
 
+/** A discount code that was accepted for the current bag */
+export type AppliedCoupon = { code: string; discount: number; label: string };
+
 export type CheckoutConfig = {
   razorpayEnabled: boolean;
   shippingFee: number;
@@ -162,6 +168,9 @@ export type OrderDetail = {
   subtotal: number;
   shippingFee: number;
   codFee: number;
+  /** Coupon discount in paise (0 when none) */
+  discount: number;
+  couponCode: string | null;
   total: number;
   createdAt: string;
   courierName: string | null;

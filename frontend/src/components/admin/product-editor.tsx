@@ -513,7 +513,14 @@ export function ProductEditor({ product, categories }: { product?: AdminProduct;
                   tone="admin"
                   value={form.categoryId}
                   onChange={(v) => set("categoryId", v)}
-                  options={categories.map((c) => ({ value: c.id, label: c.name }))}
+                  // Subcategories read "Sarees › Silk sarees"; hidden ones say so
+                  options={categories.map((c) => {
+                    const parent = c.parentId ? categories.find((p) => p.id === c.parentId) : undefined;
+                    return {
+                      value: c.id,
+                      label: `${parent ? `${parent.name} › ` : ""}${c.name}${c.isActive && parent?.isActive !== false ? "" : " (hidden)"}`,
+                    };
+                  })}
                   placeholder="Choose a category"
                   invalid={Boolean(errors.categoryId)}
                   className={`${inputCls} flex items-center gap-2 text-left`}
