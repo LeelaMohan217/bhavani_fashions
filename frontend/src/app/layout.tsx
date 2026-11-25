@@ -5,7 +5,9 @@ import "./globals.css";
 const fraunces = Fraunces({
   variable: "--font-fraunces",
   subsets: ["latin"],
-  axes: ["opsz", "SOFT"],
+  // opsz sharpens large headings (font-optical-sizing in globals.css); the unused SOFT axis is left out
+  // to keep the font files smaller
+  axes: ["opsz"],
   style: ["normal", "italic"],
   display: "swap",
 });

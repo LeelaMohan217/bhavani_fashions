@@ -1,5 +1,7 @@
-// Server-side data access for the storefront. Results are cached for a few minutes
-// with Next.js Cache Components ("use cache") and tagged so they can be revalidated.
+// Server-side data access for the storefront. Results go in the shared cache ("use cache: remote",
+// one copy for every server instance) with the "store" profile from next.config.ts: refreshed in the
+// background every 10 minutes, and straight away when the admin saves (by tag). Visitors are served the
+// last copy meanwhile, so a page never waits for the API unless nothing has been cached for 30 days.
 import { cacheLife, cacheTag } from "next/cache";
 import type {
   Banner,
@@ -29,15 +31,15 @@ async function get<T>(path: string): Promise<T> {
 }
 
 export async function getCategories(): Promise<Category[]> {
-  "use cache";
-  cacheLife("minutes");
+  "use cache: remote";
+  cacheLife("store");
   cacheTag("catalogue");
   return get<Category[]>("/api/categories");
 }
 
 export async function getCategory(slug: string): Promise<Category | null> {
-  "use cache";
-  cacheLife("minutes");
+  "use cache: remote";
+  cacheLife("store");
   cacheTag("catalogue");
   try {
     return await get<Category>(`/api/categories/${encodeURIComponent(slug)}`);
@@ -69,8 +71,8 @@ export type ProductQuery = {
 };
 
 export async function getProducts(query: ProductQuery = {}): Promise<ProductList> {
-  "use cache";
-  cacheLife("minutes");
+  "use cache: remote";
+  cacheLife("store");
   cacheTag("catalogue");
 
   const params = new URLSearchParams();
@@ -92,8 +94,8 @@ export async function getProducts(query: ProductQuery = {}): Promise<ProductList
 }
 
 export async function getCheckoutConfig(): Promise<CheckoutConfig> {
-  "use cache";
-  cacheLife("minutes");
+  "use cache: remote";
+  cacheLife("store");
   return get<CheckoutConfig>("/api/checkout/config");
 }
 
@@ -108,8 +110,8 @@ export async function getOrder(id: string): Promise<OrderDetail | null> {
 }
 
 export async function getProduct(slug: string): Promise<ProductDetail | null> {
-  "use cache";
-  cacheLife("minutes");
+  "use cache: remote";
+  cacheLife("store");
   cacheTag("catalogue");
   try {
     return await get<ProductDetail>(`/api/products/${encodeURIComponent(slug)}`);
@@ -121,8 +123,8 @@ export async function getProduct(slug: string): Promise<ProductDetail | null> {
 
 /** Colours, fabrics and occasions on offer in a listing (for the shop filter sidebar). */
 export async function getProductFilters(query: { category?: string; isNew?: boolean; sale?: boolean }): Promise<ProductFilters> {
-  "use cache";
-  cacheLife("minutes");
+  "use cache: remote";
+  cacheLife("store");
   cacheTag("catalogue");
   const params = new URLSearchParams();
   if (query.category) params.set("category", query.category);
@@ -133,8 +135,8 @@ export async function getProductFilters(query: { category?: string; isNew?: bool
 
 /** Live home-page banners, in order. Admin saves refresh this immediately via the "banners" tag. */
 export async function getBanners(): Promise<Banner[]> {
-  "use cache";
-  cacheLife("minutes");
+  "use cache: remote";
+  cacheLife("store");
   cacheTag("banners");
   return get<Banner[]>("/api/banners");
 }
@@ -144,16 +146,16 @@ export async function getBanners(): Promise<Banner[]> {
  * category changes ("catalogue"), since menus link to categories and follow them until customised.
  */
 export async function getNavigation(menu: "header" | "footer"): Promise<NavMenu> {
-  "use cache";
-  cacheLife("minutes");
+  "use cache: remote";
+  cacheLife("store");
   cacheTag("navigation", "catalogue");
   return get<NavMenu>(`/api/navigation/${menu}`);
 }
 
 /** The store-wide offer running now (e.g. Black Friday), or null. Shoppers' pages hide it at endsAt. */
 export async function getPromotion(): Promise<Promotion | null> {
-  "use cache";
-  cacheLife("minutes");
+  "use cache: remote";
+  cacheLife("store");
   cacheTag("promotion");
   return get<Promotion | null>("/api/promotion");
 }

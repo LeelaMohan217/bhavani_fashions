@@ -205,7 +205,7 @@ export function CategoryEditor({
             suggestions={STORE_PHOTOS}
             invalid={Boolean(errors.imageUrl)}
             frameClassName="aspect-square w-32"
-            hint="Shown in the round category picture on the home page. A square photo works best. JPG, PNG or WebP, up to 10 MB."
+            hint="Shown in the round category picture on the home page. A square photo works best. Large photos are resized for you."
           />
           {err("imageUrl")}
         </Card>

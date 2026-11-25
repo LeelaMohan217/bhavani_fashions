@@ -1,15 +1,21 @@
-// Clears the catalogue and all order history so the store can be filled from the admin.
-// Deletes: products (photos, colours/sizes, stock), categories, orders (and their items and history),
-// shopping bags, the activity log and the custom header/footer menus (they link to categories, so the
-// menus go back to following the categories automatically). Coupon usage counts go back to 0.
-// Order numbers restart at BF10001.
-// Keeps: admin accounts, coupons, banners and the store-wide offer.
+// Clears the store so it can be filled from the admin.
 //
-// Usage: npm run store:reset -- --yes
-// It uses DATABASE_URL, so check which database that points at before running.
+// Always deletes: products (photos, colours/sizes, stock), categories, orders (and their items and
+// history), shopping bags, the activity log and the custom header/footer menus (they link to
+// categories, so the menus go back to following the categories automatically). Order numbers
+// restart at BF10001.
+// With --everything it also deletes: home-page banners, coupon codes and the store-wide offer.
+// Never deletes: admin accounts (so you can still sign in).
+//
+// Usage:
+//   npm run store:reset                          shows what's there, deletes nothing
+//   npm run store:reset -- --yes                 clears the catalogue and orders
+//   npm run store:reset -- --yes --everything    also clears banners, coupons and the offer
+// It uses DATABASE_URL, so check the "Database:" line before running with --yes.
 import "dotenv/config";
 import { prisma } from "../src/lib/prisma.js";
 
+const everything = process.argv.includes("--everything");
 const url = process.env.DATABASE_URL ?? "";
 let target = "(DATABASE_URL not set)";
 try {
@@ -25,26 +31,39 @@ const count = async () => ({
   orders: await prisma.order.count(),
   carts: await prisma.cart.count(),
   activity: await prisma.activityLog.count(),
+  banners: await prisma.banner.count(),
+  coupons: await prisma.coupon.count(),
+  offers: await prisma.promotion.count(),
+  admins: await prisma.adminUser.count(),
 });
 
 console.log(`Database: ${target}`);
 console.log("Now:", await count());
 
 if (!process.argv.includes("--yes")) {
-  console.log("\nNothing was deleted. Run again with --yes to clear products, categories, orders, bags and the activity log.");
+  console.log(
+    "\nNothing was deleted. Add --yes to clear products, categories, orders, bags and the activity log," +
+      "\nor --yes --everything to also clear banners, coupons and the store-wide offer.",
+  );
   await prisma.$disconnect();
   process.exit(0);
 }
 
+const tables = [
+  '"OrderEvent"', '"OrderItem"', '"Order"', '"CartItem"', '"Cart"',
+  '"ProductImage"', '"ProductVariant"', '"Product"', '"NavItem"', '"Category"', '"ActivityLog"',
+  ...(everything ? ['"Banner"', '"Coupon"', '"Promotion"'] : []),
+];
+
 await prisma.$transaction([
-  prisma.$executeRawUnsafe(
-    `TRUNCATE TABLE "OrderEvent", "OrderItem", "Order", "CartItem", "Cart",
-       "ProductImage", "ProductVariant", "Product", "NavItem", "Category", "ActivityLog"
-     RESTART IDENTITY`,
-  ),
-  prisma.coupon.updateMany({ data: { usedCount: 0 } }),
+  prisma.$executeRawUnsafe(`TRUNCATE TABLE ${tables.join(", ")} RESTART IDENTITY`),
+  ...(everything ? [] : [prisma.coupon.updateMany({ data: { usedCount: 0 } })]),
 ]);
 
 console.log("After:", await count());
-console.log("Done. Admins, coupons, banners and the store-wide offer were kept.");
+console.log(
+  everything
+    ? "Done. Everything was cleared except admin accounts."
+    : "Done. Admins, coupons, banners and the store-wide offer were kept.",
+);
 await prisma.$disconnect();

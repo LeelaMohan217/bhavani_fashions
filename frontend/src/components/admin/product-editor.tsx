@@ -384,7 +384,7 @@ export function ProductEditor({ product, categories }: { product?: AdminProduct;
                   <span className="text-neutral-500">
                     <span className="font-medium text-neutral-900">Click to upload</span> or drag photos here
                   </span>
-                  <span className="text-neutral-400">Several at once is fine. JPG, PNG or WebP, up to 10 MB each.</span>
+                  <span className="text-neutral-400">Several at once is fine. Large photos are resized for you.</span>
                 </span>
               )}
             </DropZone>

@@ -111,7 +111,7 @@ export function SinglePhoto({
   suggestions = [],
   invalid,
   frameClassName = "aspect-[3/4] w-40",
-  hint = "JPG, PNG or WebP, up to 10 MB.",
+  hint = "JPG, PNG or WebP. Large photos are resized for you.",
 }: {
   value: string;
   onChange: (url: string) => void;
